@@ -8,7 +8,7 @@ export default registerAs('mail', () => ({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587', 10),
   user: process.env.SMTP_USER,
-  pass: process.env.SMTP_PASSWORD,
+  pass: process.env.SENDGRID_API_KEY,
   service: process.env.SMTP_SERVICE || 'gmail',
   from: process.env.FROM_EMAIL,
 }));
