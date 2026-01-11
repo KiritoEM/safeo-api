@@ -1,0 +1,46 @@
+import { BaseApiReturn } from 'src/core/interfaces';
+
+// Params schemas
+export type CreateUserWithAccountSchema = {
+  email: string;
+  fullName: string;
+  type: string;
+  provider: string;
+  accessToken: string;
+  expiresAt: string;
+  scope: string;
+  idToken: string;
+  tokenType: string;
+  sessionState: string;
+  providerAccountId: string;
+};
+
+export type CreateUserSchema = Pick<
+  CreateUserWithAccountSchema,
+  'email' | 'fullName'
+> & {
+  password: string;
+};
+export type UpdateAccountSchema = Pick<
+  CreateUserWithAccountSchema,
+  | 'accessToken'
+  | 'expiresAt'
+  | 'tokenType'
+  | 'scope'
+  | 'idToken'
+  | 'sessionState'
+>;
+
+// Response schemas
+export interface AuthorizeUrlResponse extends BaseApiReturn {
+  authUrl: string;
+}
+
+export interface ExchangeTokenResponse extends BaseApiReturn {
+  accessToken: string;
+}
+
+export type PKCEGeneratorResponse = {
+  codeVerifier: string;
+  codeChallenge: string;
+};

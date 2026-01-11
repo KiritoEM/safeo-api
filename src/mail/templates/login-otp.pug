@@ -1,0 +1,33 @@
+doctype html
+html(lang="fr")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Votre code de vérification
+  body(style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;")
+    table(width="100%", cellpadding="0", cellspacing="0", border="0", style="background-color: #f6f9fc;")
+      tr
+        td(align="center")
+          table(width="600", cellpadding="0", cellspacing="0", border="0", style="margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);")
+            tr
+              td(style="padding: 40px 40px 20px; text-align: center;")
+                //- img(src="https://exemple.com/logo.png", alt="Logo", width="50", height="50", style="display: block; margin: 0 auto 20px;")
+                h1(style="margin: 0; color: #333; font-size: 24px;") Vérification de sécurité
+                p(style="margin: 10px 0 0; color: #666; font-size: 16px;") Entrez ce code pour confirmer votre identité
+            
+            tr
+              td(style="padding: 20px 40px; text-align: center;")
+                .otp-code(style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 42px; font-weight: bold; letter-spacing: 8px; padding: 25px; border-radius: 8px; display: inline-block; margin: 0 auto;")
+                  | #{otpCode}
+            
+            tr
+              td(style="padding: 30px 40px; color: #666; font-size: 15px; line-height: 1.6;")
+                p(style="margin: 0 0 15px;") Ce code expire dans :
+                p(style="margin: 0 0 20px; font-size: 18px; color: #d9534f; font-weight: bold;") #{expirationMinutes} minutes
+                
+                .divider(style="height: 1px; background-color: #eee; margin: 30px 0;")
+                
+                p(style="margin: 0 0 10px;") Si vous n'avez pas demandé ce code :
+                ul(style="margin: 10px 0; padding-left: 20px;")
+                  li(style="margin-bottom: 5px;") Ignorez simplement cet email
+                  li(style="margin-bottom: 5px;") Vérifiez la sécurité de votre compte
