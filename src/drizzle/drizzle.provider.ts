@@ -15,7 +15,7 @@ export const drizzleProvider = [
         connectionString: connectionUrl,
       });
 
-      return drizzle(pool, { schema });
+      return drizzle(pool, { schema, logger: false });
     },
   },
 ];
