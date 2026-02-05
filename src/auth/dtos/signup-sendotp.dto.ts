@@ -18,6 +18,13 @@ export class SignupSendOtpDTO {
   password: string;
 }
 
+export class ResendOtpDTO {
+  @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
+  @IsNotEmpty()
+  @IsString()
+  verificationToken: string;
+}
+
 export class SignupSendOtpResponseDTO {
   @ApiProperty({ example: 200 })
   statusCode: number;

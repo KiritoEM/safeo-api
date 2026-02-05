@@ -14,7 +14,14 @@ import { User } from 'src/drizzle/schemas';
 import { MailService } from 'src/mail/mail.service';
 import { OtpService } from 'src/otp/otp.service';
 import { generateRandomString } from 'src/core/utils/crypto-utils';
-import { LoginSchema, SignupSchema } from './types';
+import {
+  CachedUserLogin,
+  CachedUserSignup,
+  LoginSchema,
+  SendLoginEmailParams,
+  SendSignupEmailParams,
+  SignupSchema,
+} from './types';
 import { UserRepository } from '../user/user.repository';
 
 @Injectable()
@@ -26,8 +33,9 @@ export class AuthService {
     private mailService: MailService,
     private otpService: OtpService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
-  ) {}
+  ) { }
 
+  // login user
   async login(
     data: LoginSchema,
   ): Promise<User & { verificationToken: string }> {
@@ -53,23 +61,18 @@ export class AuthService {
 
     const verificationToken = generateRandomString(32);
 
-    const cacheParam = {
+    const cacheParam: CachedUserLogin = {
       id: user.id,
       email: user.email,
       verificationToken,
     };
 
     //set logged user into cache to use it in 2FA verification
-    try {
-      await this.cache.set(
-        'auth:login:' + verificationToken,
-        cacheParam,
-        30 * 60 * 1000,
-      ); // 30 minutes
-    } catch (err) {
-      this.logger.error('Failed to cache user: ', err);
-      throw new InternalServerErrorException();
-    }
+    await this.cache.set(
+      'auth:login:' + verificationToken,
+      cacheParam,
+      30 * 60 * 1000,
+    ); // 30 minutes
 
     return {
       ...user,
@@ -77,7 +80,30 @@ export class AuthService {
     };
   }
 
+  // send login email utility
+  async sendLoginEmail(data: SendLoginEmailParams) {
+    try {
+      await this.mailService.sendEmail({
+        subject: 'Confirmation de connexion',
+        to: data.email,
+        template: 'login-otp',
+        context: {
+          otpCode: data.otpCode,
+          expirationMinutes: 5,
+        },
+      });
+    } catch (err) {
+      this.logger.error('Failed to send OTP to user: ', err);
+      throw new InternalServerErrorException(
+        "Impossible d'envoyer le code de vérification à votre adresse email.",
+      );
+    }
+  }
+
+
+  // send login OTP
   async sendLoginOTP(userEmail: string, userId: string) {
+    // generate OTP code
     const otpCode = await this.otpService.generateOTPCode({
       expiresIn: 5 * 60, // 5 minutes
       metadata: { userId, email: userEmail },
@@ -101,7 +127,50 @@ export class AuthService {
     }
   }
 
-  async verifyLoginOTP(otpCode: string, verificationToken: string) {
+  // Resend OTP verification for login
+  async resendLoginOTP(verificationToken: string): Promise<{ verificationToken: string }> {
+    const newVerificationToken = generateRandomString(32);
+
+    // get cached user info
+    const cacheParam = (await this.cache.get(
+      'auth:login:' + verificationToken,
+    )) as CachedUserLogin;
+
+    if (!cacheParam) {
+      throw new UnauthorizedException(
+        'Session expirée. Veuillez vous reconnecter.',
+      );
+    }
+
+    // generate new code OTP
+    const otpCode = await this.otpService.generateOTPCode({
+      expiresIn: 5 * 60, // 5 minutes
+      metadata: { userId: cacheParam.id, email: cacheParam.email },
+    });
+
+
+    //set user into cache with new verification token
+    await this.cache.set(
+      'auth:login:' + newVerificationToken,
+      cacheParam,
+      30 * 60 * 1000,
+    ); // 30 minutes
+
+    // Delete old verification token from cache
+    await this.cache.del('auth:login:' + verificationToken);
+
+    await this.sendLoginEmail({ email: cacheParam.email, otpCode });
+
+    return {
+      verificationToken: newVerificationToken
+    }
+  }
+
+  // veritify login OTP code
+  async verifyLoginOTP(
+    otpCode: string,
+    verificationToken: string,
+  ): Promise<Pick<CachedUserLogin, 'id' | 'email'>> {
     // get cached user info
     const cacheParam = await this.cache.get('auth:login:' + verificationToken);
 
@@ -127,50 +196,25 @@ export class AuthService {
     };
   }
 
+  // check if user already exist in database
   async checkIfUserExists(email: string): Promise<User | null> {
     return await this.userRepository.findUserByEmail(email);
   }
 
-  async sendSignupOTP(data: SignupSchema) {
-    const verificationToken = generateRandomString(32);
-
-    const cacheParam = {
-      ...data,
-      password: await hashPassword(data.password),
-      verificationToken,
-    };
-
-    //set user into catch to use when creating user later
-    try {
-      await this.cache.set(
-        'auth:signup:' + verificationToken,
-        cacheParam,
-        30 * 60 * 1000,
-      ); // 30 minutes
-    } catch (err) {
-      this.logger.error('Failed to cache user: ', err);
-      throw new InternalServerErrorException();
-    }
-
-    // generate OTP code
-    const otpCode = await this.otpService.generateOTPCode({
-      expiresIn: 5 * 60, // 5 minutes
-      metadata: { email: data.email },
-    });
-
-    //send otp code to user
+  // send signup email utility
+  async sendSignupEmail(data: SendSignupEmailParams) {
     try {
       await this.mailService.sendEmail({
         subject: 'Confirmation de la création de votre compte Safeo',
         to: data.email,
         template: 'signup-otp',
         context: {
-          otpCode: otpCode,
+          otpCode: data.otpCode,
           expirationMinutes: 5,
           name:
-            data.fullName.split(' ').length > 0
-              ? data.fullName.split(' ')[0]
-              : data.fullName,
+            data.name.split(' ').length > 0
+              ? data.name.split(' ')[0]
+              : data.name,
         },
       });
     } catch (err) {
@@ -179,13 +223,97 @@ export class AuthService {
         "Impossible d'envoyer le code de vérification à votre adresse email.",
       );
     }
+  }
+
+  // send signup OTP email
+  async sendSignupOTP(
+    data: SignupSchema,
+  ): Promise<{ verificationToken: string }> {
+    const verificationToken = generateRandomString(32);
+
+    const cacheParam = {
+      ...data,
+      password: await hashPassword(data.password),
+      verificationToken,
+    } as CachedUserSignup;
+
+    //set user into catch to use when creating user later
+    await this.cache.set(
+      'auth:signup:' + verificationToken,
+      cacheParam,
+      30 * 60 * 1000,
+    ); // 30 minutes
+
+    // generate OTP code
+    const otpCode = await this.otpService.generateOTPCode({
+      expiresIn: 5 * 60, // 5 minutes
+      metadata: { email: data.email },
+    });
+
+    // send otp code
+    await this.sendSignupEmail({
+      email: data.email,
+      name: data.fullName,
+      otpCode: otpCode,
+    });
 
     return {
       verificationToken,
     };
   }
 
-  async verifySignupOTP(otpCode: string, verificationToken: string) {
+  // Resend OTP verification for signup
+  async resendSignupOTP(
+    verificationToken: string,
+  ): Promise<{ verificationToken: string }> {
+    const newVerificationToken = generateRandomString(32);
+
+    // get cached user info
+    const cacheParam = (await this.cache.get(
+      'auth:signup:' + verificationToken,
+    )) as CachedUserSignup;
+
+    if (!cacheParam) {
+      throw new UnauthorizedException(
+        'Session expirée. Veuillez vous reinscrire.',
+      );
+    }
+
+    //set user into cache with new verification token
+    await this.cache.set(
+      'auth:signup:' + newVerificationToken,
+      cacheParam,
+      30 * 60 * 1000,
+    ); // 30 minutes
+
+
+    // Delete old verification token from cache
+    await this.cache.del('auth:signup:' + verificationToken);
+
+
+    // generate new OTP code
+    const newOtpCode = await this.otpService.generateOTPCode({
+      expiresIn: 5 * 60, // 5 minutes
+      metadata: { email: cacheParam.email },
+    });
+
+    // send otp code
+    await this.sendSignupEmail({
+      email: cacheParam.email,
+      name: cacheParam.fullName,
+      otpCode: newOtpCode,
+    });
+
+    return {
+      verificationToken: newVerificationToken,
+    };
+  }
+
+  // verify signupt OTP
+  async verifySignupOTP(
+    otpCode: string,
+    verificationToken: string,
+  ): Promise<SignupSchema> {
     // get cached user info
     const cacheParam = await this.cache.get('auth:signup:' + verificationToken);
 

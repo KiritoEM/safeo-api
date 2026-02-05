@@ -53,7 +53,7 @@ export class OauthController {
     private oauhtService: OauthService,
     private userService: UserService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   @Get('pkce-generator')
   @HttpCode(HttpStatus.CREATED)

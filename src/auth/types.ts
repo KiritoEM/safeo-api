@@ -20,3 +20,28 @@ export interface Iverify2FAResponse extends BaseApiReturn {
 export interface ISignupSendOtpResponse extends BaseApiReturn {
   verificationToken: string;
 }
+
+// cached params types
+export type CachedUserLogin = {
+  id: string;
+  email: string;
+  verificationToken: string;
+};
+
+export type CachedUserSignup = SignupSchema & {
+  verificationToken: string;
+};
+
+// send signup email params
+export type SendSignupEmailParams = {
+  email: string;
+  otpCode: string;
+  name: string;
+};
+
+
+// send login email params
+export type SendLoginEmailParams = {
+  email: string;
+  otpCode: string;
+};

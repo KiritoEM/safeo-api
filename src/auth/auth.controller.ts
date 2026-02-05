@@ -25,6 +25,7 @@ import {
 } from './types';
 import { Verify2FADto, Verify2FAResponseDto } from './dtos/verify-otp.dto';
 import {
+  ResendOtpDTO,
   SignupSendOtpDTO,
   SignupSendOtpResponseDTO,
 } from './dtos/signup-sendotp.dto';
@@ -35,7 +36,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -66,6 +67,32 @@ export class AuthController {
       message: 'Code OTP envoyé avec succés par email',
     };
   }
+
+  @Post('login/resend-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Renvoyer le code OTP de connexion",
+  })
+  @ApiBody({ type: ResendOtpDTO })
+  @ApiOkResponse({
+    description: 'Code OTP réenvoyé avec succés',
+    type: LoginResponseDTO,
+  })
+  async resendLoginOTP(
+    @Body() loginOtpDto: ResendOtpDTO,
+  ): Promise<IloginResponse> {
+    // send 2FA code
+    const { verificationToken } = await this.authService.resendLoginOTP(
+      loginOtpDto.verificationToken,
+    );
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Code OTP réenvoyé avec succés',
+      verificationToken,
+    };
+  }
+
 
   @Post('login/verify-otp')
   @HttpCode(HttpStatus.OK)
@@ -136,6 +163,30 @@ export class AuthController {
     return {
       statusCode: HttpStatus.OK,
       message: "Code OTP envoyé avec succés pour l'inscription",
+      verificationToken,
+    };
+  }
+
+  @Post('signup/resend-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Renvoyer le code OTP d'inscription",
+  })
+  @ApiBody({ type: ResendOtpDTO })
+  @ApiOkResponse({
+    description: 'Code OTP réenvoyé avec succés',
+    type: SignupSendOtpResponseDTO,
+  })
+  async resendSignupOTP(
+    @Body() signupResendOtpDto: ResendOtpDTO,
+  ): Promise<ISignupSendOtpResponse> {
+    const { verificationToken } = await this.authService.resendSignupOTP(
+      signupResendOtpDto.verificationToken,
+    );
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Code OTP réenvoyé avec succés',
       verificationToken,
     };
   }
