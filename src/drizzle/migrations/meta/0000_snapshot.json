@@ -1,5 +1,5 @@
 {
-  "id": "358e504b-466e-4d2b-b457-1060925c2751",
+  "id": "bf6f1dda-ab7a-4908-a74b-0335cdfac555",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -143,6 +143,12 @@
         },
         "password": {
           "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
           "type": "text",
           "primaryKey": false,
           "notNull": false

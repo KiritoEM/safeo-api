@@ -16,10 +16,12 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' ? [''] : '*',
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? ['https://safeo.greny.app', 'https://www.safeo.greny.app']
+        : '*',
     credentials: true,
   });
-
   app.use(morgan('dev'));
 
   app.useGlobalPipes(

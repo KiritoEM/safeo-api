@@ -20,6 +20,7 @@ CREATE TABLE "users" (
 	"email" text NOT NULL,
 	"full_name" text NOT NULL,
 	"password" text,
+	"refresh_token" text,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")

@@ -2,8 +2,6 @@ import {
   ConflictException,
   Inject,
   Injectable,
-  InternalServerErrorException,
-  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,27 +9,23 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import * as cacheManager from 'cache-manager';
 import { comparePassword, hashPassword } from 'src/core/utils/hashing_utils';
 import { User } from 'src/drizzle/schemas';
-import { MailService } from 'src/mail/mail.service';
 import { OtpService } from 'src/otp/otp.service';
 import { generateRandomString } from 'src/core/utils/crypto-utils';
 import {
   CachedUserLogin,
   CachedUserSignup,
   LoginSchema,
-  SendLoginEmailParams,
-  SendSignupEmailParams,
   SignupSchema,
 } from './types';
 import { UserRepository } from '../user/user.repository';
+import { SendOtpService } from './send-otp.service';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private userRepository: UserRepository,
-    private mailService: MailService,
     private otpService: OtpService,
+    private sendOTPService: SendOtpService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
   ) { }
 
@@ -80,27 +74,6 @@ export class AuthService {
     };
   }
 
-  // send login email utility
-  async sendLoginEmail(data: SendLoginEmailParams) {
-    try {
-      await this.mailService.sendEmail({
-        subject: 'Confirmation de connexion',
-        to: data.email,
-        template: 'login-otp',
-        context: {
-          otpCode: data.otpCode,
-          expirationMinutes: 5,
-        },
-      });
-    } catch (err) {
-      this.logger.error('Failed to send OTP to user: ', err);
-      throw new InternalServerErrorException(
-        "Impossible d'envoyer le code de vérification à votre adresse email.",
-      );
-    }
-  }
-
-
   // send login OTP
   async sendLoginOTP(userEmail: string, userId: string) {
     // generate OTP code
@@ -109,22 +82,7 @@ export class AuthService {
       metadata: { userId, email: userEmail },
     });
 
-    try {
-      await this.mailService.sendEmail({
-        subject: 'Confirmation de connexion',
-        to: userEmail,
-        template: 'login-otp',
-        context: {
-          otpCode,
-          expirationMinutes: 5,
-        },
-      });
-    } catch (err) {
-      this.logger.error('Failed to send OTP to user: ', err);
-      throw new InternalServerErrorException(
-        "Impossible d'envoyer le code de vérification à votre adresse email.",
-      );
-    }
+    await this.sendOTPService.sendLoginEmail({ email: userEmail, otpCode: otpCode });
   }
 
   // Resend OTP verification for login
@@ -159,7 +117,7 @@ export class AuthService {
     // Delete old verification token from cache
     await this.cache.del('auth:login:' + verificationToken);
 
-    await this.sendLoginEmail({ email: cacheParam.email, otpCode });
+    await this.sendOTPService.sendLoginEmail({ email: cacheParam.email, otpCode });
 
     return {
       verificationToken: newVerificationToken
@@ -201,30 +159,6 @@ export class AuthService {
     return await this.userRepository.findUserByEmail(email);
   }
 
-  // send signup email utility
-  async sendSignupEmail(data: SendSignupEmailParams) {
-    try {
-      await this.mailService.sendEmail({
-        subject: 'Confirmation de la création de votre compte Safeo',
-        to: data.email,
-        template: 'signup-otp',
-        context: {
-          otpCode: data.otpCode,
-          expirationMinutes: 5,
-          name:
-            data.name.split(' ').length > 0
-              ? data.name.split(' ')[0]
-              : data.name,
-        },
-      });
-    } catch (err) {
-      this.logger.error('Failed to send OTP to user: ', err);
-      throw new InternalServerErrorException(
-        "Impossible d'envoyer le code de vérification à votre adresse email.",
-      );
-    }
-  }
-
   // send signup OTP email
   async sendSignupOTP(
     data: SignupSchema,
@@ -251,7 +185,7 @@ export class AuthService {
     });
 
     // send otp code
-    await this.sendSignupEmail({
+    await this.sendOTPService.sendSignupEmail({
       email: data.email,
       name: data.fullName,
       otpCode: otpCode,
@@ -298,7 +232,7 @@ export class AuthService {
     });
 
     // send otp code
-    await this.sendSignupEmail({
+    await this.sendOTPService.sendSignupEmail({
       email: cacheParam.email,
       name: cacheParam.fullName,
       otpCode: newOtpCode,

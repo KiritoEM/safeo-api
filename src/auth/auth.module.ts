@@ -4,10 +4,11 @@ import { AuthController } from './auth.controller';
 import { UserModule } from 'src/user/user.module';
 import { MailModule } from 'src/mail/mail.module';
 import { OtpModule } from 'src/otp/otp.module';
+import { SendOtpService } from './send-otp.service';
 
 @Module({
-  providers: [AuthService],
+  providers: [AuthService, SendOtpService],
   controllers: [AuthController],
   imports: [UserModule, MailModule, OtpModule],
 })
-export class AuthModule {}
+export class AuthModule { }
