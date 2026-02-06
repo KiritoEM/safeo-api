@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   ConflictException,
   Inject,
@@ -16,9 +17,12 @@ import {
   CachedUserSignup,
   LoginSchema,
   SignupSchema,
+  VerifyLoginResponse,
 } from './types';
 import { UserRepository } from '../user/user.repository';
 import { SendOtpService } from './send-otp.service';
+import { JwtService } from '@nestjs/jwt';
+import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +30,7 @@ export class AuthService {
     private userRepository: UserRepository,
     private otpService: OtpService,
     private sendOTPService: SendOtpService,
+    private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
   ) { }
 
@@ -124,11 +129,11 @@ export class AuthService {
     }
   }
 
-  // veritify login OTP code
+  // verify login OTP code
   async verifyLoginOTP(
     otpCode: string,
     verificationToken: string,
-  ): Promise<Pick<CachedUserLogin, 'id' | 'email'>> {
+  ): Promise<VerifyLoginResponse> {
     // get cached user info
     const cacheParam = await this.cache.get('auth:login:' + verificationToken);
 
@@ -148,9 +153,17 @@ export class AuthService {
       );
     }
 
+    // create refresh token  and update user
+    const refreshToken = this.jwtService.sign({}, {
+      expiresIn: JWT_REFRESH_TOKEN_DURATION
+    });
+
+    await this.userRepository.updateUser({ refreshToken });
+
     return {
       id: cacheParam['id'] as string,
       email: cacheParam['email'] as string,
+      refreshToken
     };
   }
 
@@ -190,6 +203,7 @@ export class AuthService {
       name: data.fullName,
       otpCode: otpCode,
     });
+
 
     return {
       verificationToken,
@@ -273,7 +287,55 @@ export class AuthService {
     return cacheParam as SignupSchema;
   }
 
+  // create new user
   async createNewUser(data: SignupSchema): Promise<User[]> {
-    return await this.userRepository.createUser(data);
+    const refreshToken = this.jwtService.sign({}, {
+      expiresIn: JWT_REFRESH_TOKEN_DURATION
+    });
+
+    const userToAdd = { ...data, refreshToken };
+
+    return await this.userRepository.createUser(userToAdd);
+  }
+
+  // refresh access token using refresh token
+  async refreshAccesToken(refreshToken: string): Promise<{ accessToken: string }> {
+    // validate refresh token
+    await this.verifyToken(refreshToken);
+
+    // get user by refresh token
+    const user = await this.userRepository.findUserByRefreshToken(refreshToken);
+
+    if (!user) {
+      throw new UnauthorizedException('Refresh token invalide');
+    }
+
+    // create JWT Token
+    const JWTPayload = {
+      id: user.id,
+      email: user.email,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(JWTPayload)
+    }
+  }
+
+  // verify token error
+  async verifyToken(token: string) {
+    try {
+      return await this.jwtService.verifyAsync(token);
+    } catch (error: any) {
+      if (error instanceof Error) {
+        if (error.name === 'TokenExpiredError') {
+          throw new UnauthorizedException('Le token a expiré');
+        }
+        if (error.name === 'JsonWebTokenError') {
+          throw new UnauthorizedException('Token invalide');
+        }
+      }
+
+      throw new UnauthorizedException('Erreur de vérification du token');
+    }
   }
 }

@@ -15,10 +15,19 @@ export interface IloginResponse extends BaseApiReturn {
 
 export interface Iverify2FAResponse extends BaseApiReturn {
   accessToken: string;
+  refreshToken: string;
 }
+
+export interface IrefreshTokenResponse extends BaseApiReturn {
+  accessToken: string;
+}
+
 
 export interface ISignupSendOtpResponse extends BaseApiReturn {
   verificationToken: string;
+}
+export type VerifyLoginResponse = Pick<CachedUserLogin, 'id' | 'email'> & {
+  refreshToken: string;
 }
 
 // cached params types

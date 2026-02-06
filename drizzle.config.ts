@@ -10,4 +10,8 @@ export default {
   },
   verbose: true,
   strict: true,
+  migrations: {
+    table: '__drizzle_migrations',
+    schema: 'public'
+  }
 } satisfies Config;

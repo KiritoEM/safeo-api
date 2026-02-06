@@ -5,23 +5,27 @@ export class Verify2FADto {
   @ApiProperty({ example: '123456' })
   @IsNotEmpty()
   @IsString()
-  code: string;
+  code!: string;
 
   @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
   @IsNotEmpty()
   @IsString()
-  verificationToken: string;
+  verificationToken!: string;
 }
 
 export class Verify2FAResponseDto {
   @ApiProperty({ example: 200 })
-  statusCode: number;
+  statusCode!: number;
 
   @ApiProperty({
     example: 'Connexion reussie',
   })
-  message: string;
+  message!: string;
 
   @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
-  accessToken: string;
+  accessToken!: string;
+
+
+  @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
+  refreshToken!: string;
 }

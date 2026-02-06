@@ -27,25 +27,31 @@ export class UserService {
   async createNewUser(
     userData: CreateUserSchema | CreateUserWithAccountSchema,
     authType: AuthTypeEnum,
-  ): Promise<User[]> {
+  ): Promise<User | null> {
     if (authType === AuthTypeEnum.CREDENTIAL) {
-      return await this.userRepository.createUser(userData as CreateUserSchema);
+      const user =  await this.userRepository.createUser(userData as CreateUserSchema);
+
+      return user[0];
     } else {
-      return await this.userRepository.createUserWithAccount(
+      const account =  await this.userRepository.createUserWithAccount(
         userData as CreateUserWithAccountSchema,
       );
+
+      return account[0];
     }
   }
 
   async updateAccount(
     userId: string,
     accountData: UpdateAccountSchema,
-  ): Promise<Account[]> {
+  ): Promise<Account | null> {
     const user = await this.userRepository.findUserById(userId);
 
     if (!user)
       throw new NotFoundException('Aucun utilisateur trouvé avec cet ID.');
 
-    return await this.accountRespository.updateAccound(userId, accountData);
+    const account =  await this.accountRespository.updateAccount(userId, accountData);
+
+    return account[0];
   }
 }

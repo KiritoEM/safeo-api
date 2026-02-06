@@ -5,23 +5,23 @@ export class LoginDTO {
   @ApiProperty({ example: 'johndoer@example.com' })
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'votre_mot_de_passe' })
   @IsNotEmpty()
   @IsString()
-  password: string;
+  password!: string;
 }
 
 export class LoginResponseDTO {
   @ApiProperty({ example: 200 })
-  statusCode: number;
+  statusCode!: number;
 
   @ApiProperty({
     example: 'Connexion reussie pour le premier facteur',
   })
-  message: string;
+  message!: string;
 
   @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
-  verificationToken: string;
+  verificationToken!: string;
 }

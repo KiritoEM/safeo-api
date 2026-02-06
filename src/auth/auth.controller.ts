@@ -17,9 +17,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
-import { LoginDTO, LoginResponseDTO } from './dtos/login-dto';
+import { LoginDTO, LoginResponseDTO } from './dtos/login.dto';
 import {
   IloginResponse,
+  IrefreshTokenResponse,
   ISignupSendOtpResponse,
   Iverify2FAResponse,
 } from './types';
@@ -29,6 +30,7 @@ import {
   SignupSendOtpDTO,
   SignupSendOtpResponseDTO,
 } from './dtos/signup-sendotp.dto';
+import { refreshAccessTokenDto, refreshAccessTokenResponseDto } from './dtos/refresh-token.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -124,6 +126,7 @@ export class AuthController {
     return {
       statusCode: HttpStatus.OK,
       accessToken: this.jwtService.sign(JWTPayload),
+      refreshToken: otpVerificationResponse.refreshToken,
       message: 'Connexion réussie',
     };
   }
@@ -225,7 +228,33 @@ export class AuthController {
     return {
       statusCode: HttpStatus.CREATED,
       accessToken: this.jwtService.sign(JWTPayload),
+      refreshToken: createdUser[0].refreshToken as string,
       message: 'Inscription réussie! Bienvenue sur Safeo.',
+    };
+  }
+
+  @Post('refresh-access-token')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: "Rafraichir le token d'accés",
+  })
+  @ApiBody({ type: refreshAccessTokenDto })
+  @ApiOkResponse({
+    description: "Token d'accés rafraichis avec succés",
+    type: refreshAccessTokenResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token invalide ou refresh token expiré',
+  })
+  async refreshAccessToken(
+    @Body() refreshTokenDto: refreshAccessTokenDto,
+  ): Promise<IrefreshTokenResponse> {
+    const { accessToken } = await this.authService.refreshAccesToken(refreshTokenDto.refreshToken);
+
+    return {
+      statusCode: HttpStatus.CREATED,
+      accessToken,
+      message: "Token d'accés rafraichis avec succés",
     };
   }
 }

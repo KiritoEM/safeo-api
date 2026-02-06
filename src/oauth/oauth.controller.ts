@@ -14,7 +14,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { JwtService } from '@nestjs/jwt';
 import {
   ApiBody,
   ApiCreatedResponse,
@@ -51,9 +50,8 @@ export class OauthController {
 
   constructor(
     private oauhtService: OauthService,
-    private userService: UserService,
-    private jwtService: JwtService,
-  ) {}
+    private userService: UserService
+  ) { }
 
   @Get('pkce-generator')
   @HttpCode(HttpStatus.CREATED)
@@ -154,19 +152,16 @@ export class OauthController {
           AuthTypeEnum.OAUTH,
         );
 
-        if (newUser?.length === 0 || !newUser)
+        if (!newUser)
           throw new BadRequestException("Impossible de créer l'utilisateur");
-
-        const JWTpayload = { sub: newUser[0].id, email: newUser[0].email };
 
         return {
           statusCode: HttpStatus.OK,
-          accessToken: await this.jwtService.signAsync(JWTpayload),
-          message: 'Utilisateur connecté avec succés avec Google',
+          ...await this.oauhtService.generateTokens(newUser.id, newUser.email)
         };
       }
 
-      //  update account and create JWT Token
+      //  update account 
       await this.userService.updateAccount(user.id, {
         accessToken: responsePayload.access_token,
         tokenType: 'Bearer',
@@ -176,13 +171,13 @@ export class OauthController {
         sessionState: '',
       });
 
-      const JWTpayload = { sub: user.id, email: user.email };
 
       return {
         statusCode: HttpStatus.OK,
-        accessToken: await this.jwtService.signAsync(JWTpayload),
-        message: 'Utilisateur connecté avec succés avec Google',
+        ...await this.oauhtService.generateTokens(user.id, user.email)
       };
+
+
     } catch (err) {
       this.logger.error('An error was occurend when exchanging token: ', err);
 

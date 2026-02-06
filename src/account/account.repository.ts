@@ -10,7 +10,7 @@ export class AccountRepository {
     @Inject('DrizzleAsyncProvider') private db: drizzleProvider.DrizzleDB,
   ) {}
 
-  async updateAccound(
+  async updateAccount(
     userId: string,
     accountData: UpdateAccountSchema,
   ): Promise<Account[]> {

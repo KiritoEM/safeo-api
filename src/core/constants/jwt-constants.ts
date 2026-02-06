@@ -1,0 +1,1 @@
+export const JWT_REFRESH_TOKEN_DURATION = '5d' as const;
