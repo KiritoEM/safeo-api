@@ -236,7 +236,7 @@ export class OauthController {
       params.append('error', errorMessage);
     }
 
-    const deepLink = `safeo://auth?${params.toString()}`;
+    const deepLink = `safeo://auth-callback?${params.toString()}`;
 
     // close window and redirect to deep link
     return res.send(renderRedirectionTemplate(deepLink));
