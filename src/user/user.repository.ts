@@ -2,7 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import * as drizzleProvider from 'src/drizzle/drizzle.provider';
 import { Account, account, User, users } from 'src/drizzle/schemas';
-import { CreateUserSchema, CreateUserWithAccountSchema, UpdateUser } from './types';
+import {
+  CreateUserSchema,
+  CreateUserWithAccountSchema,
+  UpdateUser,
+} from './types';
 
 export type UserWithAccount = User & {
   account: Account | null;
@@ -13,7 +17,7 @@ export class UserRepository {
   constructor(
     @Inject('DrizzleAsyncProvider')
     private readonly db: drizzleProvider.DrizzleDB,
-  ) { }
+  ) {}
 
   async findUserById(id: string): Promise<User | null> {
     const user = await this.db.query.users.findFirst({
@@ -32,7 +36,9 @@ export class UserRepository {
     return user ?? null;
   }
 
-  async findUserByRefreshToken(refreshToken: string): Promise<UserWithAccount | null> {
+  async findUserByRefreshToken(
+    refreshToken: string,
+  ): Promise<UserWithAccount | null> {
     const user = await this.db.query.users.findFirst({
       where: eq(users.refreshToken, refreshToken),
       with: { account: true },
@@ -45,7 +51,9 @@ export class UserRepository {
     return await this.db.insert(users).values(data).returning();
   }
 
-  async createUserWithAccount(data: CreateUserWithAccountSchema): Promise<User[]> {
+  async createUserWithAccount(
+    data: CreateUserWithAccountSchema,
+  ): Promise<User[]> {
     return await this.db.transaction(async (tx) => {
       const user = await tx.insert(users).values(data).returning();
 
@@ -70,8 +78,6 @@ export class UserRepository {
   }
 
   async updateUser(data: UpdateUser): Promise<User[]> {
-    return await this.db.update(users)
-      .set(data)
-      .returning();
+    return await this.db.update(users).set(data).returning();
   }
 }

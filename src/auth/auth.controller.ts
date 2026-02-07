@@ -30,7 +30,10 @@ import {
   SignupSendOtpDTO,
   SignupSendOtpResponseDTO,
 } from './dtos/signup-sendotp.dto';
-import { refreshAccessTokenDto, refreshAccessTokenResponseDto } from './dtos/refresh-token.dto';
+import {
+  refreshAccessTokenDto,
+  refreshAccessTokenResponseDto,
+} from './dtos/refresh-token.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -73,7 +76,7 @@ export class AuthController {
   @Post('login/resend-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Renvoyer le code OTP de connexion",
+    summary: 'Renvoyer le code OTP de connexion',
   })
   @ApiBody({ type: ResendOtpDTO })
   @ApiOkResponse({
@@ -94,7 +97,6 @@ export class AuthController {
       verificationToken,
     };
   }
-
 
   @Post('login/verify-otp')
   @HttpCode(HttpStatus.OK)
@@ -217,18 +219,19 @@ export class AuthController {
     // create user
     const createdUser = await this.authService.createNewUser(
       otpVerificationResponse,
+      verify2faDto.verificationToken,
     );
 
     // create JWT Token
     const JWTPayload = {
-      id: createdUser[0].id,
-      email: createdUser[0].email,
+      id: createdUser.id,
+      email: createdUser.email,
     };
 
     return {
       statusCode: HttpStatus.CREATED,
       accessToken: this.jwtService.sign(JWTPayload),
-      refreshToken: createdUser[0].refreshToken as string,
+      refreshToken: createdUser.refreshToken as string,
       message: 'Inscription réussie! Bienvenue sur Safeo.',
     };
   }
@@ -249,7 +252,9 @@ export class AuthController {
   async refreshAccessToken(
     @Body() refreshTokenDto: refreshAccessTokenDto,
   ): Promise<IrefreshTokenResponse> {
-    const { accessToken } = await this.authService.refreshAccesToken(refreshTokenDto.refreshToken);
+    const { accessToken } = await this.authService.refreshAccesToken(
+      refreshTokenDto.refreshToken,
+    );
 
     return {
       statusCode: HttpStatus.CREATED,

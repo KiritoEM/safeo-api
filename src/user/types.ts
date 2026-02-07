@@ -13,11 +13,14 @@ export type CreateUserWithAccountSchema = {
   tokenType: string;
   sessionState: string;
   providerAccountId: string;
+  encryptionKey?: string;
+  encryptionIv?: string;
+  encryptionTag?: string;
 };
 
 export type CreateUserSchema = Pick<
   CreateUserWithAccountSchema,
-  'email' | 'fullName'
+  'email' | 'fullName' | 'encryptionKey' | 'encryptionIv' | 'encryptionTag'
 > & {
   password: string;
 };
@@ -34,7 +37,7 @@ export type UpdateAccountSchema = Pick<
 export type UpdateUser = Partial<{
   email: string;
   fullName: string;
-  refreshToken: string;
+  refreshToken: string | null;
 }>;
 
 // Response schemas

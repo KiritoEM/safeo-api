@@ -23,6 +23,9 @@ import { UserRepository } from '../user/user.repository';
 import { SendOtpService } from './send-otp.service';
 import { JwtService } from '@nestjs/jwt';
 import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
+import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
+import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
+import { EncryptionService } from 'src/encryption/encryption.service';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +34,8 @@ export class AuthService {
     private otpService: OtpService,
     private sendOTPService: SendOtpService,
     private jwtService: JwtService,
+    private logRepository: ActivityLogRepository,
+    private encryptionService: EncryptionService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
   ) { }
 
@@ -87,11 +92,23 @@ export class AuthService {
       metadata: { userId, email: userEmail },
     });
 
-    await this.sendOTPService.sendLoginEmail({ email: userEmail, otpCode: otpCode });
+    await this.sendOTPService.sendLoginEmail({
+      email: userEmail,
+      otpCode: otpCode,
+    });
+
+    // audit log
+    await this.logRepository.log({
+      action: AUDIT_ACTIONS.LOGIN_ACTION,
+      target: AUDIT_TARGET.USER,
+      userId,
+    });
   }
 
   // Resend OTP verification for login
-  async resendLoginOTP(verificationToken: string): Promise<{ verificationToken: string }> {
+  async resendLoginOTP(
+    verificationToken: string,
+  ): Promise<{ verificationToken: string }> {
     const newVerificationToken = generateRandomString(32);
 
     // get cached user info
@@ -111,7 +128,6 @@ export class AuthService {
       metadata: { userId: cacheParam.id, email: cacheParam.email },
     });
 
-
     //set user into cache with new verification token
     await this.cache.set(
       'auth:login:' + newVerificationToken,
@@ -122,11 +138,21 @@ export class AuthService {
     // Delete old verification token from cache
     await this.cache.del('auth:login:' + verificationToken);
 
-    await this.sendOTPService.sendLoginEmail({ email: cacheParam.email, otpCode });
+    await this.sendOTPService.sendLoginEmail({
+      email: cacheParam.email,
+      otpCode,
+    });
+
+    // audit log
+    await this.logRepository.log({
+      action: AUDIT_ACTIONS.LOGIN_RESEND_OTP_ACTION,
+      target: AUDIT_TARGET.USER,
+      userId: cacheParam.id,
+    });
 
     return {
-      verificationToken: newVerificationToken
-    }
+      verificationToken: newVerificationToken,
+    };
   }
 
   // verify login OTP code
@@ -135,7 +161,9 @@ export class AuthService {
     verificationToken: string,
   ): Promise<VerifyLoginResponse> {
     // get cached user info
-    const cacheParam = await this.cache.get('auth:login:' + verificationToken);
+    const cacheParam = (await this.cache.get(
+      'auth:login:' + verificationToken,
+    )) as CachedUserLogin;
 
     if (!cacheParam) {
       throw new UnauthorizedException(
@@ -154,16 +182,31 @@ export class AuthService {
     }
 
     // create refresh token  and update user
-    const refreshToken = this.jwtService.sign({}, {
-      expiresIn: JWT_REFRESH_TOKEN_DURATION
-    });
+    const refreshToken = this.jwtService.sign(
+      {},
+      {
+        expiresIn: JWT_REFRESH_TOKEN_DURATION,
+      },
+    );
 
     await this.userRepository.updateUser({ refreshToken });
 
+    // audit log
+    await this.logRepository.log({
+      action: AUDIT_ACTIONS.LOGIN_VALID_OTP_ACTION,
+      target: AUDIT_TARGET.USER,
+      userId: cacheParam.id,
+    });
+
+    // delete caches after user created
+    if (verificationToken) {
+      await this.cache.del('auth:signup:' + verificationToken);
+    }
+
     return {
-      id: cacheParam['id'] as string,
-      email: cacheParam['email'] as string,
-      refreshToken
+      id: cacheParam.id,
+      email: cacheParam.id,
+      refreshToken,
     };
   }
 
@@ -204,7 +247,6 @@ export class AuthService {
       otpCode: otpCode,
     });
 
-
     return {
       verificationToken,
     };
@@ -234,10 +276,8 @@ export class AuthService {
       30 * 60 * 1000,
     ); // 30 minutes
 
-
     // Delete old verification token from cache
     await this.cache.del('auth:signup:' + verificationToken);
-
 
     // generate new OTP code
     const newOtpCode = await this.otpService.generateOTPCode({
@@ -288,18 +328,51 @@ export class AuthService {
   }
 
   // create new user
-  async createNewUser(data: SignupSchema): Promise<User[]> {
-    const refreshToken = this.jwtService.sign({}, {
-      expiresIn: JWT_REFRESH_TOKEN_DURATION
+  async createNewUser(data: SignupSchema, verificationToken?: string): Promise<User> {
+    // generate refresh token
+    const refreshToken = this.jwtService.sign(
+      {},
+      {
+        expiresIn: JWT_REFRESH_TOKEN_DURATION,
+      },
+    );
+
+    // generate encryption key
+    const encryptionPayload = this.encryptionService.generateAESKek();
+
+    if (!encryptionPayload) {
+      throw new UnauthorizedException('Impossible de creer la cle de chiffrement');
+    }
+
+    const userToAdd = {
+      ...data,
+      encryptionKey: encryptionPayload.key,
+      encryptionIv: encryptionPayload.IV,
+      encryptionTag: encryptionPayload.tag,
+      refreshToken,
+    };
+
+    const user = await this.userRepository.createUser(userToAdd);
+
+    // audit log
+    await this.logRepository.log({
+      action: AUDIT_ACTIONS.SIGNUP_VALID_OTP_ACTION,
+      target: AUDIT_TARGET.USER,
+      userId: user[0].id,
     });
 
-    const userToAdd = { ...data, refreshToken };
+    // delete caches after user created
+    if (verificationToken) {
+      await this.cache.del('auth:signup:' + verificationToken);
+    }
 
-    return await this.userRepository.createUser(userToAdd);
+    return user[0];
   }
 
   // refresh access token using refresh token
-  async refreshAccesToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshAccesToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string }> {
     // validate refresh token
     await this.verifyToken(refreshToken);
 
@@ -310,6 +383,16 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token invalide');
     }
 
+    // invalidate refresh token after usage
+    await this.userRepository.updateUser({ refreshToken: null });
+
+    // audit log
+    await this.logRepository.log({
+      action: AUDIT_ACTIONS.REFRESH_ACCESS_TOKEN_ACTION,
+      target: AUDIT_TARGET.USER,
+      userId: user.id,
+    });
+
     // create JWT Token
     const JWTPayload = {
       id: user.id,
@@ -317,8 +400,8 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.jwtService.sign(JWTPayload)
-    }
+      accessToken: this.jwtService.sign(JWTPayload),
+    };
   }
 
   // verify token error

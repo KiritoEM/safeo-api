@@ -50,7 +50,7 @@ export class OauthController {
 
   constructor(
     private oauhtService: OauthService,
-    private userService: UserService
+    private userService: UserService,
   ) { }
 
   @Get('pkce-generator')
@@ -157,11 +157,14 @@ export class OauthController {
 
         return {
           statusCode: HttpStatus.OK,
-          ...await this.oauhtService.generateTokens(newUser.id, newUser.email)
+          ...(await this.oauhtService.generateTokens(
+            newUser.id,
+            newUser.email,
+          )),
         };
       }
 
-      //  update account 
+      //  update account
       await this.userService.updateAccount(user.id, {
         accessToken: responsePayload.access_token,
         tokenType: 'Bearer',
@@ -171,13 +174,10 @@ export class OauthController {
         sessionState: '',
       });
 
-
       return {
         statusCode: HttpStatus.OK,
-        ...await this.oauhtService.generateTokens(user.id, user.email)
+        ...(await this.oauhtService.generateTokens(user.id, user.email)),
       };
-
-
     } catch (err) {
       this.logger.error('An error was occurend when exchanging token: ', err);
 

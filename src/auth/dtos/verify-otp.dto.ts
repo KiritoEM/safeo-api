@@ -25,7 +25,6 @@ export class Verify2FAResponseDto {
   @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
   accessToken!: string;
 
-
   @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
   refreshToken!: string;
 }

@@ -8,6 +8,34 @@
       "when": 1770393719927,
       "tag": "0000_red_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770436814616,
+      "tag": "0001_striped_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770437671512,
+      "tag": "0002_stiff_malcolm_colcord",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770438453640,
+      "tag": "0003_famous_doomsday",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770466959822,
+      "tag": "0004_nice_terrax",
+      "breakpoints": true
     }
   ]
 }

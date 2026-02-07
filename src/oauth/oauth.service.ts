@@ -25,6 +25,8 @@ import {
   GOOGLE_TOKEN_REQUEST_URL,
   GOOGLE_USERINFO_REQUEST_URL,
 } from './constants';
+import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
+import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 
 @Injectable()
 export class OauthService {
@@ -33,8 +35,9 @@ export class OauthService {
     private configService: ConfigService,
     private httpService: HttpService,
     private jwtService: JwtService,
+    private logRepository: ActivityLogRepository,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
-  ) { }
+  ) {}
 
   // generate google Auth URL to open in browser
   generateGoogleAuthUrl(codeChallenge: string): string {
@@ -116,9 +119,12 @@ export class OauthService {
 
   // create refresh token and update user
   async createRefreshToken(): Promise<User | null> {
-    const refreshToken = this.jwtService.sign({}, {
-      expiresIn: JWT_REFRESH_TOKEN_DURATION
-    });
+    const refreshToken = this.jwtService.sign(
+      {},
+      {
+        expiresIn: JWT_REFRESH_TOKEN_DURATION,
+      },
+    );
 
     const user = await this.userRepository.updateUser({ refreshToken });
 
@@ -127,6 +133,13 @@ export class OauthService {
 
   // generate 0auth tokens
   async generateTokens(userId: string, email: string) {
+    // audit log
+    await this.logRepository.log({
+      action: AUDIT_ACTIONS.OAUTH_ACTION,
+      target: AUDIT_TARGET.ACCOUNT,
+      userId,
+    });
+
     // create refresh token
     const updatedUser = await this.createRefreshToken();
 
