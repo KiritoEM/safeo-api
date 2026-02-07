@@ -37,7 +37,7 @@ export class OauthService {
     private jwtService: JwtService,
     private logRepository: ActivityLogRepository,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
-  ) {}
+  ) { }
 
   // generate google Auth URL to open in browser
   generateGoogleAuthUrl(codeChallenge: string): string {
@@ -132,12 +132,13 @@ export class OauthService {
   }
 
   // generate 0auth tokens
-  async generateTokens(userId: string, email: string) {
+  async generateTokens(userId: string, email: string, ipAddress?: string) {
     // audit log
     await this.logRepository.log({
       action: AUDIT_ACTIONS.OAUTH_ACTION,
       target: AUDIT_TARGET.ACCOUNT,
       userId,
+      ipAddress
     });
 
     // create refresh token

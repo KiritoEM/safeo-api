@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   InternalServerErrorException,
+  Ip,
   Logger,
   Post,
   Query,
@@ -113,6 +114,7 @@ export class OauthController {
   @HttpCode(HttpStatus.OK)
   async exchangeToken(
     @Body() exchangeTokenDto: ExchangeTokenDto,
+    @Ip() ip
   ): Promise<types.ExchangeTokenResponse> {
     try {
       // exchange code to token
@@ -160,6 +162,7 @@ export class OauthController {
           ...(await this.oauhtService.generateTokens(
             newUser.id,
             newUser.email,
+            ip
           )),
         };
       }

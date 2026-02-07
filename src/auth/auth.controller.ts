@@ -4,7 +4,10 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Ip,
   Post,
+  Req,
+  Request,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -59,12 +62,13 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Mot de passe incorrect',
   })
-  async login(@Body() loginDto: LoginDTO): Promise<IloginResponse> {
+  async login(@Body() loginDto: LoginDTO, @Ip() ip): Promise<IloginResponse> {
     //login user
     const user = await this.authService.login(loginDto);
 
+
     //send 2FA code if user has logged successfully
-    await this.authService.sendLoginOTP(user.email, user.id);
+    await this.authService.sendLoginOTP(user.email, user.id, ip);
 
     return {
       statusCode: HttpStatus.OK,
@@ -85,10 +89,13 @@ export class AuthController {
   })
   async resendLoginOTP(
     @Body() loginOtpDto: ResendOtpDTO,
+    @Req() req: Request,
+    @Ip() ip
   ): Promise<IloginResponse> {
     // send 2FA code
     const { verificationToken } = await this.authService.resendLoginOTP(
       loginOtpDto.verificationToken,
+      ip
     );
 
     return {
@@ -113,10 +120,13 @@ export class AuthController {
   })
   async verifyLoginOTP(
     @Body() verify2faDto: Verify2FADto,
+    @Req() req: Request,
+    @Ip() ip
   ): Promise<Iverify2FAResponse> {
     const otpVerificationResponse = await this.authService.verifyLoginOTP(
       verify2faDto.code,
       verify2faDto.verificationToken,
+      ip
     );
 
     // create JWT Token
@@ -209,6 +219,8 @@ export class AuthController {
   })
   async verifySignupOTP(
     @Body() verify2faDto: Verify2FADto,
+    @Req() req: Request,
+    @Ip() ip
   ): Promise<Iverify2FAResponse> {
     // verify 2FA
     const otpVerificationResponse = await this.authService.verifySignupOTP(
@@ -220,6 +232,7 @@ export class AuthController {
     const createdUser = await this.authService.createNewUser(
       otpVerificationResponse,
       verify2faDto.verificationToken,
+      ip
     );
 
     // create JWT Token
@@ -251,9 +264,12 @@ export class AuthController {
   })
   async refreshAccessToken(
     @Body() refreshTokenDto: refreshAccessTokenDto,
+    @Req() req: Request,
+    @Ip() ip
   ): Promise<IrefreshTokenResponse> {
     const { accessToken } = await this.authService.refreshAccesToken(
       refreshTokenDto.refreshToken,
+      ip
     );
 
     return {

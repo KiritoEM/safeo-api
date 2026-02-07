@@ -16,7 +16,7 @@ export class ActivityLogRepository {
   async log(data: CreateActivityLogSchema) {
     const createdLog = await this.db
       .insert(activityLogs)
-      .values({ ...data, action: `${data.action} ${data.target}` })
+      .values({ ...data, action: `${data.action}.${data.target}` })
       .returning();
 
     // log in terminal
