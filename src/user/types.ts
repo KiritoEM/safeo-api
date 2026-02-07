@@ -13,6 +13,8 @@ export type CreateUserWithAccountSchema = {
   tokenType: string;
   sessionState: string;
   providerAccountId: string;
+  encryptionKey?: string;
+  encryptionIv?: string;
 };
 
 export type CreateUserSchema = Pick<

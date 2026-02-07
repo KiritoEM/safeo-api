@@ -221,14 +221,14 @@ export class AuthController {
 
     // create JWT Token
     const JWTPayload = {
-      id: createdUser[0].id,
-      email: createdUser[0].email,
+      id: createdUser.id,
+      email: createdUser.email,
     };
 
     return {
       statusCode: HttpStatus.CREATED,
       accessToken: this.jwtService.sign(JWTPayload),
-      refreshToken: createdUser[0].refreshToken as string,
+      refreshToken: createdUser.refreshToken as string,
       message: 'Inscription réussie! Bienvenue sur Safeo.',
     };
   }

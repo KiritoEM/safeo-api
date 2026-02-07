@@ -15,6 +15,20 @@
       "when": 1770436814616,
       "tag": "0001_striped_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770437671512,
+      "tag": "0002_stiff_malcolm_colcord",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770438453640,
+      "tag": "0003_famous_doomsday",
+      "breakpoints": true
     }
   ]
 }

@@ -1,12 +1,13 @@
-import { date, pgTable, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, uuid, boolean } from "drizzle-orm/pg-core";
 import { timestamps } from "./column-helper";
 import { text } from "drizzle-orm/pg-core";
 import { users } from "./user.schema";
 import { documents } from "./document.schema";
+import { timestamp } from "drizzle-orm/pg-core";
 
 export const documentShares = pgTable('document_shares', {
     id: uuid('id').defaultRandom().primaryKey(),
-    expiresAt: date('expires_at', { mode: 'string' }).notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
     isActive: boolean('is_active').default(true),
     shareToken: text('share_token').notNull().unique(),
     ownerId: uuid('owner_id').notNull().references(() => users.id),

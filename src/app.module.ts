@@ -14,6 +14,7 @@ import { OauthModule } from './oauth/oauth.module';
 import jwtConfig, { jwtOptions } from './core/configs/jwt.config';
 import { OtpModule } from './otp/otp.module';
 import { AccountModule } from './account/account.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import mailConfig from './core/configs/mail.config';
 
 @Module({
@@ -31,6 +32,7 @@ import mailConfig from './core/configs/mail.config';
     MailModule,
     OtpModule,
     AccountModule,
+    ActivityLogsModule,
   ],
   providers: [AppService],
 })

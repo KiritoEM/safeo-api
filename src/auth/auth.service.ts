@@ -23,6 +23,8 @@ import { UserRepository } from '../user/user.repository';
 import { SendOtpService } from './send-otp.service';
 import { JwtService } from '@nestjs/jwt';
 import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
+import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
+import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +33,7 @@ export class AuthService {
     private otpService: OtpService,
     private sendOTPService: SendOtpService,
     private jwtService: JwtService,
+    private logRepository: ActivityLogRepository,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
   ) { }
 
@@ -88,6 +91,15 @@ export class AuthService {
     });
 
     await this.sendOTPService.sendLoginEmail({ email: userEmail, otpCode: otpCode });
+
+    // audit log
+    await this.logRepository.log(
+      {
+        action: AUDIT_ACTIONS.LOGIN_ACTION,
+        target: AUDIT_TARGET.USER,
+        userId
+      }
+    );
   }
 
   // Resend OTP verification for login
@@ -124,6 +136,15 @@ export class AuthService {
 
     await this.sendOTPService.sendLoginEmail({ email: cacheParam.email, otpCode });
 
+    // audit log
+    await this.logRepository.log(
+      {
+        action: AUDIT_ACTIONS.LOGIN_RESEND_OTP_ACTION,
+        target: AUDIT_TARGET.USER,
+        userId: cacheParam.id
+      }
+    );
+
     return {
       verificationToken: newVerificationToken
     }
@@ -135,7 +156,7 @@ export class AuthService {
     verificationToken: string,
   ): Promise<VerifyLoginResponse> {
     // get cached user info
-    const cacheParam = await this.cache.get('auth:login:' + verificationToken);
+    const cacheParam = await this.cache.get('auth:login:' + verificationToken) as CachedUserLogin;
 
     if (!cacheParam) {
       throw new UnauthorizedException(
@@ -160,9 +181,18 @@ export class AuthService {
 
     await this.userRepository.updateUser({ refreshToken });
 
+    // audit log
+    await this.logRepository.log(
+      {
+        action: AUDIT_ACTIONS.LOGIN_VALID_OTP_ACTION,
+        target: AUDIT_TARGET.USER,
+        userId: cacheParam.id
+      }
+    );
+
     return {
-      id: cacheParam['id'] as string,
-      email: cacheParam['email'] as string,
+      id: cacheParam.id,
+      email: cacheParam.id,
       refreshToken
     };
   }
@@ -203,7 +233,6 @@ export class AuthService {
       name: data.fullName,
       otpCode: otpCode,
     });
-
 
     return {
       verificationToken,
@@ -288,14 +317,25 @@ export class AuthService {
   }
 
   // create new user
-  async createNewUser(data: SignupSchema): Promise<User[]> {
+  async createNewUser(data: SignupSchema): Promise<User> {
     const refreshToken = this.jwtService.sign({}, {
       expiresIn: JWT_REFRESH_TOKEN_DURATION
     });
 
     const userToAdd = { ...data, refreshToken };
 
-    return await this.userRepository.createUser(userToAdd);
+    const user = await this.userRepository.createUser(userToAdd);
+
+    // audit log
+    await this.logRepository.log(
+      {
+        action: AUDIT_ACTIONS.SIGNUP_VALID_OTP_ACTION,
+        target: AUDIT_TARGET.USER,
+        userId: user[0].id
+      }
+    );
+
+    return user[0];
   }
 
   // refresh access token using refresh token
@@ -309,6 +349,15 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Refresh token invalide');
     }
+
+    // audit log
+    await this.logRepository.log(
+      {
+        action: AUDIT_ACTIONS.REFRESH_ACCESS_TOKEN_ACTION,
+        target: AUDIT_TARGET.USER,
+        userId: user.id
+      }
+    );
 
     // create JWT Token
     const JWTPayload = {

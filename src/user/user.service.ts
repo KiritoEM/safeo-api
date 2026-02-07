@@ -14,7 +14,7 @@ export class UserService {
   constructor(
     private userRepository: UserRepository,
     private accountRespository: AccountRepository,
-  ) {}
+  ) { }
 
   async getUserById(id: string): Promise<User | null> {
     return await this.userRepository.findUserById(id);
@@ -29,11 +29,11 @@ export class UserService {
     authType: AuthTypeEnum,
   ): Promise<User | null> {
     if (authType === AuthTypeEnum.CREDENTIAL) {
-      const user =  await this.userRepository.createUser(userData as CreateUserSchema);
+      const user = await this.userRepository.createUser(userData as CreateUserSchema);
 
       return user[0];
     } else {
-      const account =  await this.userRepository.createUserWithAccount(
+      const account = await this.userRepository.createUserWithAccount(
         userData as CreateUserWithAccountSchema,
       );
 
@@ -50,7 +50,7 @@ export class UserService {
     if (!user)
       throw new NotFoundException('Aucun utilisateur trouvé avec cet ID.');
 
-    const account =  await this.accountRespository.updateAccount(userId, accountData);
+    const account = await this.accountRespository.updateAccount(userId, accountData);
 
     return account[0];
   }
