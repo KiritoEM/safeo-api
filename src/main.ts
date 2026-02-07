@@ -18,7 +18,7 @@ async function bootstrap() {
   app.enableCors({
     origin:
       process.env.NODE_ENV === 'production'
-        ? ['https://safeo.greny.app', 'https://www.safeo.greny.app']
+        ? ['https://safeo-api.greny.app', 'https://www.safeo-api.greny.app/']
         : '*',
     credentials: true,
   });
@@ -49,6 +49,14 @@ async function bootstrap() {
         },
       },
     })
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'JWT',
+      description: 'Enter JWT token',
+      in: 'header',
+    }, 'JWT-auth',)
     .build();
 
   const documentFactory = () =>

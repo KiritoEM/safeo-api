@@ -7,7 +7,7 @@ import {
   UpdateAccountSchema,
 } from './types';
 import { AccountRepository } from 'src/account/account.repository';
-import { AuthTypeEnum } from 'src/core/enums/auth_enums';
+import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 
 @Injectable()
 export class UserService {

@@ -6,11 +6,12 @@ import { MailModule } from 'src/mail/mail.module';
 import { OtpModule } from 'src/otp/otp.module';
 import { SendOtpService } from './send-otp.service';
 import { ActivityLogsModule } from 'src/activity-logs/activity-logs.module';
-import { EncryptionModule } from 'src/encryption/encryption.module';
+import { EncryptionKeyModule } from 'src/encryption/encryption-key.module';
 
 @Module({
   providers: [AuthService, SendOtpService],
   controllers: [AuthController],
-  imports: [UserModule, MailModule, OtpModule, ActivityLogsModule, EncryptionModule],
+  imports: [UserModule, MailModule, OtpModule, ActivityLogsModule, EncryptionKeyModule],
+  exports: [AuthService]
 })
 export class AuthModule { }

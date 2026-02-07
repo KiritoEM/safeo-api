@@ -21,8 +21,8 @@ export class ActivityLogRepository {
 
     // log in terminal
     const formattedLog = [
-      chalk.gray(`[${createdLog[0].logDate.toLocaleDateString()}]`),
-      chalk.white(createdLog[0].action),
+      chalk.gray(`[${createdLog[0].logDate.toDateString()}]`),
+      chalk.white(`Action: ${createdLog[0].action}`),
       chalk.cyan(`User: ${createdLog[0].userId}...`),
       createdLog[0].ipAddress
         ? chalk.yellow(`IP: ${createdLog[0].ipAddress}`)
