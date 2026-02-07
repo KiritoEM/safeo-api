@@ -22,9 +22,9 @@ export const users = pgTable('users', {
   storageUsed: bigint('storage_used', { mode: 'number' }).default(0),
   isActive: boolean('is_active').default(true),
   refreshToken: text('refresh_token'),
-  lastLoginAt: timestamp('last_login_at').defaultNow().notNull(),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
   isDeleted: boolean('is_deleted').default(false),
-  deletedAt: timestamp('deleted_at').defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }).defaultNow(),
   ...timestamps,
 });
 

@@ -36,6 +36,13 @@
       "when": 1770466959822,
       "tag": "0004_nice_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770473270291,
+      "tag": "0005_lively_norman_osborn",
+      "breakpoints": true
     }
   ]
 }

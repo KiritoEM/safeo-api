@@ -5,7 +5,7 @@ export const activityLogs = pgTable('activity_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   action: text('action').notNull(),
   ipAddress: varchar('ip_address'),
-  logDate: timestamp('log_date').defaultNow().notNull(),
+  logDate: timestamp('log_date', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id),
