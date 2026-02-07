@@ -22,13 +22,12 @@ export interface IrefreshTokenResponse extends BaseApiReturn {
   accessToken: string;
 }
 
-
 export interface ISignupSendOtpResponse extends BaseApiReturn {
   verificationToken: string;
 }
 export type VerifyLoginResponse = Pick<CachedUserLogin, 'id' | 'email'> & {
   refreshToken: string;
-}
+};
 
 // cached params types
 export type CachedUserLogin = {
@@ -47,7 +46,6 @@ export type SendSignupEmailParams = {
   otpCode: string;
   name: string;
 };
-
 
 // send login email params
 export type SendLoginEmailParams = {

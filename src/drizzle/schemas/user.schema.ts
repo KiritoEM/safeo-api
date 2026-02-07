@@ -1,4 +1,11 @@
-import { pgTable, uuid, text, bigint, boolean, timestamp } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  bigint,
+  boolean,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 import { timestamps } from './column-helper';
 
 export const users = pgTable('users', {
@@ -8,7 +15,10 @@ export const users = pgTable('users', {
   password: text('password'),
   encryptionKey: text('encryption_key'),
   encryptionIv: text('encryption_iv'),
-  storageLimits: bigint('storage_limits', { mode: 'number' }).default(0.5 * 1024 * 1024 * 1024),
+  encryptionTag: text('encryption_tag'),
+  storageLimits: bigint('storage_limits', { mode: 'number' }).default(
+    0.5 * 1024 * 1024 * 1024,
+  ),
   storageUsed: bigint('storage_used', { mode: 'number' }).default(0),
   isActive: boolean('is_active').default(true),
   refreshToken: text('refresh_token'),

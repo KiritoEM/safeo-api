@@ -5,6 +5,6 @@ import { DrizzleModule } from 'src/drizzle/drizzle.module';
 @Module({
   providers: [ActivityLogRepository],
   exports: [ActivityLogRepository],
-  imports: [DrizzleModule]
+  imports: [DrizzleModule],
 })
-export class ActivityLogsModule { }
+export class ActivityLogsModule {}

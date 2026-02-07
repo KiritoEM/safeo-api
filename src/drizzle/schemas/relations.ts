@@ -13,10 +13,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   documents: many(documents),
   activityLogs: many(activityLogs),
   ownedShares: many(documentShares, {
-    relationName: 'owner'
+    relationName: 'owner',
   }),
   receivedShares: many(documentShares, {
-    relationName: 'sharedWith'
+    relationName: 'sharedWith',
   }),
 }));
 
@@ -30,31 +30,34 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const documentsRelations = relations(documents, ({ one, many }) => ({
   user: one(users, {
     fields: [documents.userId],
-    references: [users.id]
+    references: [users.id],
   }),
-  shares: many(documentShares)
+  shares: many(documentShares),
 }));
 
-export const documentsSharesRelations = relations(documentShares, ({ one }) => ({
-  owner: one(users, {
-    fields: [documentShares.ownerId],
-    references: [users.id],
-    relationName: 'owner'
+export const documentsSharesRelations = relations(
+  documentShares,
+  ({ one }) => ({
+    owner: one(users, {
+      fields: [documentShares.ownerId],
+      references: [users.id],
+      relationName: 'owner',
+    }),
+    sharedWith: one(users, {
+      fields: [documentShares.sharedUserId],
+      references: [users.id],
+      relationName: '',
+    }),
+    document: one(documents, {
+      fields: [documentShares.documentId],
+      references: [documents.id],
+    }),
   }),
-  sharedWith: one(users, {
-    fields: [documentShares.sharedUserId],
-    references: [users.id],
-    relationName: ''
-  }),
-  document: one(documents, {
-    fields: [documentShares.documentId],
-    references: [documents.id]
-  })
-}));
+);
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(users, {
     fields: [activityLogs.userId],
-    references: [users.id]
-  })
+    references: [users.id],
+  }),
 }));

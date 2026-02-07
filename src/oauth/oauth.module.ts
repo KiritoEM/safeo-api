@@ -10,6 +10,12 @@ import { ActivityLogsModule } from 'src/activity-logs/activity-logs.module';
 @Module({
   controllers: [OauthController],
   providers: [OauthService],
-  imports: [HttpModule, DrizzleModule, ConfigModule, UserModule, ActivityLogsModule],
+  imports: [
+    HttpModule,
+    DrizzleModule,
+    ConfigModule,
+    UserModule,
+    ActivityLogsModule,
+  ],
 })
-export class OauthModule { }
+export class OauthModule {}

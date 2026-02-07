@@ -15,13 +15,16 @@ import jwtConfig, { jwtOptions } from './core/configs/jwt.config';
 import { OtpModule } from './otp/otp.module';
 import { AccountModule } from './account/account.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
+import { EncryptionService } from './encryption/encryption.service';
+import { EncryptionModule } from './encryption/encryption.module';
 import mailConfig from './core/configs/mail.config';
+import encryptionConfig from './core/configs/encryption.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [oauthConfig, dbConfig, redisConfig, mailConfig, jwtConfig],
+      load: [oauthConfig, dbConfig, redisConfig, mailConfig, jwtConfig, encryptionConfig],
     }),
     OauthModule,
     DrizzleModule,
@@ -33,7 +36,8 @@ import mailConfig from './core/configs/mail.config';
     OtpModule,
     AccountModule,
     ActivityLogsModule,
+    EncryptionModule,
   ],
-  providers: [AppService],
+  providers: [AppService, EncryptionService],
 })
-export class AppModule {}
+export class AppModule { }

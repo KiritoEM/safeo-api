@@ -29,6 +29,13 @@
       "when": 1770438453640,
       "tag": "0003_famous_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770466959822,
+      "tag": "0004_nice_terrax",
+      "breakpoints": true
     }
   ]
 }
