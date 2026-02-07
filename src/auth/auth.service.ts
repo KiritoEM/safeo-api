@@ -85,7 +85,7 @@ export class AuthService {
   }
 
   // send login OTP
-  async sendLoginOTP(userEmail: string, userId: string) {
+  async sendLoginOTP(userEmail: string, userId: string, ipAddress?: string) {
     // generate OTP code
     const otpCode = await this.otpService.generateOTPCode({
       expiresIn: 5 * 60, // 5 minutes
@@ -102,12 +102,14 @@ export class AuthService {
       action: AUDIT_ACTIONS.LOGIN_ACTION,
       target: AUDIT_TARGET.USER,
       userId,
+      ipAddress
     });
   }
 
   // Resend OTP verification for login
   async resendLoginOTP(
     verificationToken: string,
+    ipAddress?: string
   ): Promise<{ verificationToken: string }> {
     const newVerificationToken = generateRandomString(32);
 
@@ -148,6 +150,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.LOGIN_RESEND_OTP_ACTION,
       target: AUDIT_TARGET.USER,
       userId: cacheParam.id,
+      ipAddress
     });
 
     return {
@@ -159,6 +162,7 @@ export class AuthService {
   async verifyLoginOTP(
     otpCode: string,
     verificationToken: string,
+    ipAddress?: string
   ): Promise<VerifyLoginResponse> {
     // get cached user info
     const cacheParam = (await this.cache.get(
@@ -196,6 +200,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.LOGIN_VALID_OTP_ACTION,
       target: AUDIT_TARGET.USER,
       userId: cacheParam.id,
+      ipAddress
     });
 
     // delete caches after user created
@@ -328,7 +333,7 @@ export class AuthService {
   }
 
   // create new user
-  async createNewUser(data: SignupSchema, verificationToken?: string): Promise<User> {
+  async createNewUser(data: SignupSchema, verificationToken?: string, ipAddress?: string): Promise<User> {
     // generate refresh token
     const refreshToken = this.jwtService.sign(
       {},
@@ -359,6 +364,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.SIGNUP_VALID_OTP_ACTION,
       target: AUDIT_TARGET.USER,
       userId: user[0].id,
+      ipAddress
     });
 
     // delete caches after user created
@@ -372,6 +378,7 @@ export class AuthService {
   // refresh access token using refresh token
   async refreshAccesToken(
     refreshToken: string,
+    ipAddress?: string
   ): Promise<{ accessToken: string }> {
     // validate refresh token
     await this.verifyToken(refreshToken);
@@ -391,6 +398,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.REFRESH_ACCESS_TOKEN_ACTION,
       target: AUDIT_TARGET.USER,
       userId: user.id,
+      ipAddress
     });
 
     // create JWT Token
