@@ -11,7 +11,7 @@ export const account = pgTable('account', {
   provider: text('provider').notNull(),
   providerAccountId: text('provider_account_id'),
   accessToken: text('access_token'),
-  refreshTokent: text('refresh_token'),
+  refreshToken: text('refresh_token'),
   expiresAt: text('expires_at'),
   tokenType: text('token_type'),
   scope: text('scope'),
@@ -20,5 +20,5 @@ export const account = pgTable('account', {
   ...timestamps,
 });
 
-//type
+//types
 export type Account = typeof account.$inferSelect;

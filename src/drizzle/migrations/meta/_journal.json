@@ -8,6 +8,13 @@
       "when": 1770393719927,
       "tag": "0000_red_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770436814616,
+      "tag": "0001_striped_blade",
+      "breakpoints": true
     }
   ]
 }

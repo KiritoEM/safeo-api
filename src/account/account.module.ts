@@ -7,4 +7,4 @@ import { AccountRepository } from './account.repository';
   imports: [DrizzleModule],
   exports: [AccountRepository],
 })
-export class AccountModule {}
+export class AccountModule { }
