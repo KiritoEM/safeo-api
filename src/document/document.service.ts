@@ -206,12 +206,12 @@ export class DocumentService {
         });
 
         // audit log
-        // await this.logRepository.log({
-        //     action: AUDIT_ACTIONS.GET_ALL_USER_DOCUMENT,
-        //     target: AUDIT_TARGET.DOCUMENT,
-        //     userId,
-        //     ipAddress
-        // });
+        await this.logRepository.log({
+            action: AUDIT_ACTIONS.GET_ALL_USER_DOCUMENT,
+            target: AUDIT_TARGET.DOCUMENT,
+            userId,
+            ipAddress
+        });
 
         return await Promise.all(documentsWithPublicUrl);
     }
