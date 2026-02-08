@@ -34,8 +34,8 @@ export type DocumentPublic = Omit<Document, 'encryptionKey' | 'encryptionIv' | '
 };
 
 export interface ICreateDocumentPublic extends BaseApiReturn {
-    data?: DocumentPublic;
+    document?: DocumentPublic;
 }
 export interface IGetAllDocumentPublic extends BaseApiReturn {
-    data: DocumentPublic[];
+    documents: DocumentPublic[];
 }

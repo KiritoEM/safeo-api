@@ -23,5 +23,5 @@ export class UploadDocumentPublicDTO {
     message!: string;
 
     @ApiProperty({ type: DocumentDto })
-    data!: DocumentDto;
+    document!: DocumentDto;
 }

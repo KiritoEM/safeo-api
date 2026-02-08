@@ -25,7 +25,7 @@ export class GetAllDocumentResponseDTO {
     message!: string;
 
     @ApiProperty({ type: [DocumentDto] })
-    data!: [DocumentDto];
+    documents!: [DocumentDto];
 }
 
 export class GetAllDocumentQueryDTO {

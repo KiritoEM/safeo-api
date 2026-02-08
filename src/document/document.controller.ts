@@ -48,7 +48,7 @@ export class DocumentController {
         @UploadedFile(new CustomFileValidator())
         file: MulterFile
     ): Promise<ICreateDocumentPublic> {
-        const createDocument = await this.documentService.uploadFile(
+        const createdDocument = await this.documentService.uploadFile(
             (uploadDocumentDTO.accessLevel as DocumentAccessLevelEnum),
             file,
             user.id,
@@ -57,7 +57,7 @@ export class DocumentController {
 
         return {
             statusCode: HttpStatus.CREATED,
-            data: createDocument,
+            document: createdDocument,
             message: 'Document ajouté avec succés'
         }
     }
@@ -84,7 +84,7 @@ export class DocumentController {
 
         return {
             statusCode: HttpStatus.OK,
-            data: allDocuments,
+            documents: allDocuments,
             message: 'Documents récupérés avec succès'
         }
     }
