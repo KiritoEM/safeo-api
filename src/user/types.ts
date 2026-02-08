@@ -35,7 +35,7 @@ export type UpdateAccountSchema = Pick<
   | 'sessionState'
 >;
 
-export type update = Partial<{
+export type UpdateUserSchema = Partial<{
   email: string;
   fullName: string;
   refreshToken: string | null;

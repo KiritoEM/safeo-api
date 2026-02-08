@@ -4,7 +4,7 @@ import * as drizzleProvider from 'src/drizzle/drizzle.provider';
 import { Document, documents, users } from "src/drizzle/schemas";
 import { userColumnsPublic } from "src/drizzle/utils/public-columns.helper";
 import { FileSortingEnum } from "src/core/enums/file-enums";
-import { CreateDocumentSchema, GetDocumentsFilterSchema } from "./types";
+import { CreateDocumentSchema, DocumentPublic, GetDocumentsFilterSchema, UpdateDocumentSchema } from "./types";
 
 @Injectable()
 export class DocumentRepository {
@@ -49,5 +49,34 @@ export class DocumentRepository {
             .rightJoin(users, eq(documents.userId, users.id))
             .where(and(...conditions))
             .orderBy(desc(sortByColumn));
+    }
+
+    async update(documentId: string, userId: string, data: UpdateDocumentSchema): Promise<DocumentPublic[]> {
+        return this.db
+            .update(documents)
+            .set(data)
+            .where(
+                and(
+                    eq(documents.userId, userId),
+                    eq(documents.id, documentId)
+                )
+            )
+            .returning()
+    }
+
+    async softDelete(documentId: string, userId: string): Promise<Document[]> {
+        return this.db
+            .update(documents)
+            .set({
+                isDeleted: true,
+                deletedAt: new Date()
+            })
+            .where(
+                and(
+                    eq(documents.userId, userId),
+                    eq(documents.id, documentId)
+                )
+            )
+            .returning()
     }
 }

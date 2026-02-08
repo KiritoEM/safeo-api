@@ -8,7 +8,7 @@ import { UserRepository } from 'src/user/user.repository';
 import { DocumentRepository } from './document.repository';
 import { UserStorageStatusEnum } from 'src/user/enums';
 import { getFileType } from 'src/core/utils/file-utils';
-import { CreateDocumentSchema, DocumentPublic, GetDocumentsFilterSchema } from './types';
+import { CreateDocumentSchema, DocumentPublic, GetDocumentsFilterSchema, UpdateDocumentSchema } from './types';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { MulterFile } from 'src/types/multer';
@@ -214,5 +214,57 @@ export class DocumentService {
         });
 
         return await Promise.all(documentsWithPublicUrl);
+    }
+
+    // update document metadata
+    async updateDocumentMetadata(
+        userId: string,
+        documentId: string,
+        data: UpdateDocumentSchema,
+        ipAddress?: string
+    ): Promise<DocumentPublic> {
+        const updatedDocument = await this.documentRepository.update(documentId, userId, data);
+
+        // audit log
+        await this.logRepository.log({
+            action: AUDIT_ACTIONS.UPDATE_DOCUMENT_ACTION,
+            target: AUDIT_TARGET.DOCUMENT,
+            userId,
+            ipAddress
+        });
+
+        return updatedDocument[0];
+    }
+
+
+    // soft delete document
+    async deleteDocument(
+        userId: string,
+        documentId: string,
+        ipAddress?: string
+    ) {
+        //get user by id
+        const user = await this.userRepository.findUserById(userId);
+
+        if (!user) {
+            throw new NotFoundException('Utilisateur introuvable');
+        }
+
+        const deletedDocument = await this.documentRepository.softDelete(documentId, user.id);
+
+        if (deletedDocument.length == 0) {
+            throw new InternalServerErrorException('Impossible de supprimer le document');
+        }
+
+        // decrease user storage used
+        await this.userRepository.update(user.id, { storageUsed: user.storageUsed! - deletedDocument[0].fileSize })
+
+        // audit log
+        await this.logRepository.log({
+            action: AUDIT_ACTIONS.SOFT_DELETE_DOCUMENT_ACTION,
+            target: AUDIT_TARGET.DOCUMENT,
+            userId,
+            ipAddress
+        });
     }
 }

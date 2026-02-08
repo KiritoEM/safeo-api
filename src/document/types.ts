@@ -27,6 +27,10 @@ export type GetDocumentsFilterSchema = {
     sort?: FileSortingEnum
 }
 
+export type UpdateDocumentSchema = Partial<{
+    originalName: string;
+}>
+
 // response schemas
 export type DocumentPublic = Omit<Document, 'encryptionKey' | 'encryptionIv' | 'encryptionTag' | 'bucketPath' | 'fileName' | 'encryptedMetadata'> & {
     user?: UserPublic;
@@ -38,4 +42,8 @@ export interface ICreateDocumentPublic extends BaseApiReturn {
 }
 export interface IGetAllDocumentPublic extends BaseApiReturn {
     documents: DocumentPublic[];
+}
+
+export interface IUpdateDocumentPublic extends BaseApiReturn {
+    document?: DocumentPublic;
 }

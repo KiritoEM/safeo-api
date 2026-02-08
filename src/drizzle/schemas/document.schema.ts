@@ -33,10 +33,9 @@ export const documents = pgTable('document', {
   encryptionKey: text('encryption_key').notNull(),
   encryptionIv: text('encryption_iv').notNull(),
   encryptionTag: text('encryption_tag').notNull(),
-
   accessLevel: documentAccessLevelEnum(),
   isDeleted: boolean('is_deleted').default(false),
-  deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }).defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id),

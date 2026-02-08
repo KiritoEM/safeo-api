@@ -12,11 +12,6 @@ export class DocumentDto {
     @ApiProperty({
         type: 'string',
     })
-    fileName!: string;
-
-    @ApiProperty({
-        type: 'string',
-    })
     originalName!: string;
 
     @ApiProperty({
@@ -34,21 +29,6 @@ export class DocumentDto {
         default: FileTypeEnum.DOCUMENT,
     })
     fileType!: FileTypeEnum;
-
-    @ApiProperty({
-        type: 'string',
-    })
-    encryptionKey!: string;
-
-    @ApiProperty({
-        type: 'string',
-    })
-    encryptionIv!: string;
-
-    @ApiProperty({
-        type: 'string',
-    })
-    encryptionTag!: string;
 
     @ApiProperty({
         enum: DocumentAccessLevelEnum,

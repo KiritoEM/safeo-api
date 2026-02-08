@@ -1,18 +1,19 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Ip, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Ip, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiPayloadTooLargeResponse, ApiTags, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as cacheManager from 'cache-manager';
 import { AuthGuard } from 'src/auth/guards/jwt.guard';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
 import { UserReq } from 'src/core/decorators/user.decorator';
 import * as types from 'src/auth/types';
-import { ICreateDocumentPublic, IGetAllDocumentPublic } from './types';
+import { ICreateDocumentPublic, IGetAllDocumentPublic, IUpdateDocumentPublic } from './types';
 import { DocumentService } from './document.service';
 import { UploadDocumentDTO, UploadDocumentPublicDTO } from './dtos/upload-document.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { GetAllDocumentQueryDTO, GetAllDocumentResponseDTO } from './dtos/get-all-document.dto';
 import { CustomFileValidator } from 'src/core/validators/file.validator';
 import type { MulterFile } from 'src/types/multer';
+import { UpdateDocumentDTO, UpdateDocumentResponseDTO } from './dtos/update-document.dto';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
@@ -86,6 +87,81 @@ export class DocumentController {
             statusCode: HttpStatus.OK,
             documents: allDocuments,
             message: 'Documents récupérés avec succès'
+        }
+    }
+
+    @Patch(':documentId')
+    @HttpCode(HttpStatus.OK)
+    @ApiParam({
+        name: 'documentId',
+        description: 'Id du document à mettre à jour',
+        required: true,
+        type: String,
+    })
+    @ApiOperation({
+        summary: "Mettre à jour les documents d'un utilisateur",
+    })
+    @ApiOkResponse({
+        description: 'Documen mis à jour avec succès',
+        type: UpdateDocumentResponseDTO,
+    })
+    @ApiNotFoundResponse({
+        description: 'Utilisateur introuvable',
+    })
+    async updateDocument(
+        @Param('documentId') documentId: string,
+        @UserReq() user: types.UserPayload,
+        @Ip() Ip,
+        @Body() body: UpdateDocumentDTO
+    ): Promise<IUpdateDocumentPublic> {
+        const updatedDocument = await this.documentService.updateDocumentMetadata(
+            user.id,
+            documentId,
+            {
+                originalName: body.fileName
+            },
+            Ip,
+        );
+
+        return {
+            statusCode: HttpStatus.OK,
+            document: updatedDocument,
+            message: 'Document mis à jour avec succès'
+        }
+    }
+
+    @Delete(':documentId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiParam({
+        name: 'documentId',
+        description: 'Id du document à supprimer',
+        required: true,
+        type: String,
+    })
+    @ApiOperation({
+        summary: "Supprimer un document",
+    })
+    @ApiOkResponse({
+        description: 'Document supprimé avec succès',
+        type: UpdateDocumentResponseDTO,
+    })
+    @ApiNotFoundResponse({
+        description: 'Utilisateur introuvable',
+    })
+    async deleteDocument(
+        @Param('documentId') documentId: string,
+        @UserReq() user: types.UserPayload,
+        @Ip() Ip,
+    ): Promise<IUpdateDocumentPublic> {
+        await this.documentService.deleteDocument(
+            user.id,
+            documentId,
+            Ip,
+        );
+
+        return {
+            statusCode: HttpStatus.NO_CONTENT,
+            message: 'Document supprimé avec succès'
         }
     }
 }
