@@ -8,10 +8,10 @@ import { UserRepository } from 'src/user/user.repository';
 import { DocumentRepository } from './document.repository';
 import { UserStorageStatusEnum } from 'src/user/enums';
 import { getFileType } from 'src/core/utils/file-utils';
-import { FileTypeEnum } from 'src/core/enums/file-enums';
 import { CreateDocumentSchema, DocumentPublic, GetDocumentsFilterSchema } from './types';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
+import { MulterFile } from 'src/types/multer';
 
 @Injectable()
 export class DocumentService {
@@ -26,7 +26,7 @@ export class DocumentService {
     // upload document
     async uploadFile(
         accessLevel: DocumentAccessLevelEnum,
-        file: Express.Multer.File,
+        file: MulterFile,
         userId: string,
         ipAddress?: string
     ): Promise<DocumentPublic> {
@@ -67,7 +67,7 @@ export class DocumentService {
 
         // upload file to cloud
         const { fullPath, path } = await this.storageService.uploadFile({
-            file: file.buffer,
+            file: file.buffer as Buffer,
             originalFileName: file.originalname,
             fileMimetype: file.mimetype,
         });

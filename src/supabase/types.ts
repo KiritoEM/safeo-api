@@ -1,8 +1,10 @@
+import { MulterFile } from "src/types/multer";
+
 // Params schemas
 export type uploadFileSchema = {
     file: Buffer,
     fileMimetype: string,
-    originalFileName: Express.Multer.File['originalname']
+    originalFileName: MulterFile['originalname']
 }
 
 // Responses schemas
