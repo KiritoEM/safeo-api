@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, InternalServerErrorException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import * as cacheManager from 'cache-manager';
+import { Inject, Injectable, InternalServerErrorException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
 import { aes256GcmDecrypt, aes256GcmEncrypt } from 'src/core/utils/crypto-utils';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
@@ -20,7 +22,8 @@ export class DocumentService {
         private userRepository: UserRepository,
         private storageService: SupabaseService,
         private documentRepository: DocumentRepository,
-        private logRepository: ActivityLogRepository
+        private logRepository: ActivityLogRepository,
+        @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
     ) { }
 
     // upload document
@@ -159,7 +162,7 @@ export class DocumentService {
 
         const allDocuments = await this.documentRepository.fetchAll(userId, filterQuery);
 
-        // add publicURL for all document file
+        // attach publicURL to document
         const documentsWithPublicUrl = allDocuments.map(async (doc) => {
             // decrypt DEK key
             const DekKey = this.encryptionKeyService.decryptAESDEK(
@@ -195,14 +198,27 @@ export class DocumentService {
                 ...filteredDocument
             } = doc;
 
-            // get public URL
-            const publicUrl = await this.storageService.createSignedURL(
-                doc.fileMimeType as string,
-                bucketPath,
-                60 * 60 * 24
-            );
+            // check if publicURL is cached
+            const cachedPublicUrl = await this.cache.get('document:url:' + doc.id) as { publicUrl: string };
 
-            return { ...filteredDocument, publicUrl } as DocumentPublic;
+            if (!cachedPublicUrl) {
+                const publicUrl = await this.storageService.createSignedURL(
+                    doc.fileMimeType as string,
+                    bucketPath,
+                    60 * 60 * 24
+                );
+
+                // cache publicURL 
+                await this.cache.set(
+                    'document:url:' + doc.id,
+                    { publicUrl },
+                    60 * 60 * 24
+                );
+
+                return { ...filteredDocument, publicUrl } as DocumentPublic;
+            }
+
+            return { ...filteredDocument, publicUrl: cachedPublicUrl.publicUrl } as DocumentPublic;
         });
 
         // audit log
