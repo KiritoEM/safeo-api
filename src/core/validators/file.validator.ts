@@ -3,12 +3,12 @@ import {
     Injectable,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import { Express } from 'express';
 import { ALL_MIMETYPES } from '../constants/file-constants';
+import { MulterFile } from 'src/types/multer';
 
 @Injectable()
-export class CustomFileValidator implements PipeTransform<Express.Multer.File> {
-    transform(file: Express.Multer.File): Express.Multer.File {
+export class CustomFileValidator implements PipeTransform<MulterFile> {
+    transform(file: MulterFile): MulterFile {
         if (file.size > 50 * 1024 * 1024) {
             throw new UnprocessableEntityException(
                 'Fichier trop volumineux (max 50MB)',

@@ -1,7 +1,9 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { FileSortingEnum, FileTypeEnum } from 'src/core/enums/file-enums';
+import { DocumentDto } from './document.dto';
+
 
 export class GetAllDocumentDTO {
     @ApiProperty({ name: 'accessLevel', enum: DocumentAccessLevelEnum, description: "Niveau d'accés du fichier" })
@@ -14,13 +16,16 @@ export class GetAllDocumentDTO {
 }
 
 export class GetAllDocumentResponseDTO {
-    @IsString()
-    refreshToken!: string;
+    @ApiProperty({ example: 200 })
+    statusCode!: number;
 
     @ApiProperty({
-        example: "Token d'accés rafraichis avec succés",
+        example: 'Documents récupérés avec succès',
     })
     message!: string;
+
+    @ApiProperty({ type: [DocumentDto] })
+    data!: [DocumentDto];
 }
 
 export class GetAllDocumentQueryDTO {

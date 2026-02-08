@@ -12,6 +12,7 @@ import { UploadDocumentDTO, UploadDocumentPublicDTO } from './dtos/upload-docume
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { GetAllDocumentQueryDTO, GetAllDocumentResponseDTO } from './dtos/get-all-document.dto';
 import { CustomFileValidator } from 'src/core/validators/file.validator';
+import type { MulterFile } from 'src/types/multer';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
@@ -45,7 +46,7 @@ export class DocumentController {
         @Body() uploadDocumentDTO: UploadDocumentDTO,
         @Ip() Ip,
         @UploadedFile(new CustomFileValidator())
-        file: Express.Multer.File
+        file: MulterFile
     ): Promise<ICreateDocumentPublic> {
         const createDocument = await this.documentService.uploadFile(
             (uploadDocumentDTO.accessLevel as DocumentAccessLevelEnum),

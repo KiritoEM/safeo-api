@@ -1,6 +1,7 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
 import { ApiProperty } from "@nestjs/swagger";
+import { DocumentDto } from './document.dto';
 
 export class UploadDocumentDTO {
     @ApiProperty({ name: 'accessLevel', enum: DocumentAccessLevelEnum })
@@ -13,11 +14,14 @@ export class UploadDocumentDTO {
 }
 
 export class UploadDocumentPublicDTO {
-    @IsString()
-    refreshToken!: string;
+    @ApiProperty({ example: 201 })
+    statusCode!: number;
 
     @ApiProperty({
-        example: "Token d'accés rafraichis avec succés",
+        example: 'Document uploadé avec succès',
     })
     message!: string;
+
+    @ApiProperty({ type: DocumentDto })
+    data!: DocumentDto;
 }

@@ -9,6 +9,10 @@ export class refreshAccessTokenDto {
 }
 
 export class refreshAccessTokenResponseDto {
+  @ApiProperty({ example: 200 })
+  statusCode!: number;
+
+  @ApiProperty({ example: 'd13dba4621db80ac0ae...' })
   @IsString()
   refreshToken!: string;
 
