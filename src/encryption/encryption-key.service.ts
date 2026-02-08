@@ -7,7 +7,7 @@ import { GenerateAESDekResponse } from './types';
 export class EncryptionKeyService {
     constructor(private configService: ConfigService) { }
 
-    // generate KEK key encryption key 
+    // generate KEK encryption key 
     generateAESKek(): AesGcmPayloadSchema | null {
         const randomKey = generateRandomString(32);
         const masterKey = this.configService.get<string>('encryption.keyMaster');

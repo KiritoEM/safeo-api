@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, InternalServerErrorException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
-import { aes256GcmEncryptBuffer } from 'src/core/utils/crypto-utils';
+import { aes256GcmEncrypt, aes256GcmEncryptBuffer } from 'src/core/utils/crypto-utils';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { UserRepository } from 'src/user/user.repository';
@@ -54,21 +54,22 @@ export class DocumentService {
             throw new InternalServerErrorException('Impossible de récupérer la clé de chiffrement Kek');
         }
 
-        const DekEncryptionPayload = this.encryptionKeyService.generateAESDek(kekKey);
+        const DekEncryptionKeyPayload = this.encryptionKeyService.generateAESDek(kekKey);
 
-        if (!DekEncryptionPayload) {
+        if (!DekEncryptionKeyPayload) {
             throw new InternalServerErrorException('Impossible de créér la clé de chiffrement');
         }
 
-        // encrypt uploaded file
-        const { encrypted: encryptedFile } = await aes256GcmEncryptBuffer(file.buffer, DekEncryptionPayload.DekKey);
-
         // upload file to cloud
         const { fullPath, path } = await this.storageService.uploadFile({
-            file: encryptedFile as Buffer,
+            file: file.buffer as Buffer,
             originalFileName: file.originalname as string,
             fileMimetype: file.mimetype as string,
         });
+
+        // encrypt file path and bucket path with the DEK key
+        const { encrypted: encryptedPath } = aes256GcmEncrypt(fullPath, DekEncryptionKeyPayload.DekKey);
+        const { encrypted: encryptedBucketPath } = aes256GcmEncrypt(path, DekEncryptionKeyPayload.DekKey);
 
         // add file metadata to DB
         const createdDocument = await this.documentRepository.create({
@@ -78,11 +79,11 @@ export class DocumentService {
             fileSize: file.size as number,
             fileType: (FileTypeEnum[(getFileType(file.mimetype)) as string]) as CreateDocumentSchema['fileType'],
             fileMimeType: file.mimetype as string,
-            filePath: fullPath,
-            bucketPath: path,
-            encryptionKey: DekEncryptionPayload.encrypted as string,
-            encryptionIv: DekEncryptionPayload.IV,
-            encryptionTag: DekEncryptionPayload.tag,
+            filePath: encryptedPath,
+            bucketPath: encryptedBucketPath,
+            encryptionKey: DekEncryptionKeyPayload.encrypted as string,
+            encryptionIv: DekEncryptionKeyPayload.IV,
+            encryptionTag: DekEncryptionKeyPayload.tag,
             accessLevel
         });
 
@@ -95,7 +96,14 @@ export class DocumentService {
             storageUsed: (user.storageUsed! + file.size) as number
         });
 
-        const { encryptionKey, encryptionIv, bucketPath, fileName, encryptionTag, ...filteredDocument } = createdDocument[0];
+        const {
+            encryptionKey,
+            encryptionIv,
+            bucketPath,
+            fileName,
+            encryptionTag,
+            ...filteredDocument
+        } = createdDocument[0];
 
         // audit log
         await this.logRepository.log(
