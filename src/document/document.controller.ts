@@ -99,10 +99,10 @@ export class DocumentController {
         type: String,
     })
     @ApiOperation({
-        summary: "Mettre à jour les documents d'un utilisateur",
+        summary: "Mettre à jour un document",
     })
     @ApiOkResponse({
-        description: 'Documen mis à jour avec succès',
+        description: 'Document mis à jour avec succès',
         type: UpdateDocumentResponseDTO,
     })
     @ApiNotFoundResponse({
