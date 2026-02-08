@@ -358,7 +358,7 @@ export class AuthService {
       refreshToken,
     };
 
-    const user = await this.userRepository.createUser(userToAdd);
+    const user = await this.userRepository.create(userToAdd);
 
     // audit log
     await this.logRepository.log({

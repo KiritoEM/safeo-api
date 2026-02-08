@@ -38,6 +38,7 @@ export type UpdateUser = Partial<{
   email: string;
   fullName: string;
   refreshToken: string | null;
+  storageUsed?: number;
 }>;
 
 // Response schemas

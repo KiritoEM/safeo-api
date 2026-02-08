@@ -17,14 +17,24 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { EncryptionKeyService } from './encryption/encryption-key.service';
 import { EncryptionKeyModule } from './encryption/encryption-key.module';
 import { DocumentModule } from './document/document.module';
+import { SupabaseModule } from './supabase/supabase.module';
 import mailConfig from './core/configs/mail.config';
 import encryptionConfig from './core/configs/encryption.config';
+import supabaseConfig from './core/configs/supabase.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [oauthConfig, dbConfig, redisConfig, mailConfig, jwtConfig, encryptionConfig],
+      load: [
+        oauthConfig,
+        dbConfig,
+        redisConfig,
+        mailConfig,
+        jwtConfig,
+        encryptionConfig,
+        supabaseConfig
+      ],
     }),
     OauthModule,
     DrizzleModule,
@@ -38,6 +48,7 @@ import encryptionConfig from './core/configs/encryption.config';
     ActivityLogsModule,
     EncryptionKeyModule,
     DocumentModule,
+    SupabaseModule,
   ],
   providers: [EncryptionKeyService],
 })

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, ParseFilePipeBuilder, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Ip, ParseFilePipeBuilder, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/auth/guards/jwt.guard';
@@ -7,6 +7,8 @@ import { DocumentService } from './document.service';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
 import { UserReq } from 'src/core/decorators/user.decorator';
 import * as types from 'src/auth/types';
+import { AUTHORIZED_FILE_EXTENSION } from 'src/core/constants/file-constants';
+import { ICreateDocumentResponse } from './types';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
@@ -18,6 +20,7 @@ export class DocumentController {
     @UseGuards(AuthGuard)
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('file'))
+    @HttpCode(HttpStatus.CREATED)
     @ApiOperation({
         summary: "Uploader un document",
     })
@@ -27,10 +30,11 @@ export class DocumentController {
     async uploadDocument(
         @UserReq() user: types.UserPayload,
         @Body() uploadDocumentDTO: UploadDocumentDTO,
+        @Ip() Ip,
         @UploadedFile(
             new ParseFilePipeBuilder()
                 .addFileTypeValidator({
-                    fileType: '.(png|jpeg|jpg|pdf|doc|docx|csv)'
+                    fileType: AUTHORIZED_FILE_EXTENSION
                 })
                 .addMaxSizeValidator({
                     maxSize: 40 * 1024 * 1024 //40MB max
@@ -40,15 +44,18 @@ export class DocumentController {
                 }),
         )
         file: Express.Multer.File
-    ) {
-        await this.documentService.uploadFile(
+    ): Promise<ICreateDocumentResponse> {
+        const createDocument = await this.documentService.uploadFile(
             (uploadDocumentDTO.accessLevel as DocumentAccessLevelEnum),
             file,
-            user.id
+            user.id,
+            Ip
         )
 
         return {
-            res: uploadDocumentDTO,
+            statusCode: HttpStatus.CREATED,
+            data: createDocument,
+            message: 'Document ajouté avec succés'
         }
     }
 }

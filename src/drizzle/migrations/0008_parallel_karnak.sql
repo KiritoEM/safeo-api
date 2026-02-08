@@ -1,0 +1,1 @@
+ALTER TABLE "document" ALTER COLUMN "fileType" SET DEFAULT 'docs';
