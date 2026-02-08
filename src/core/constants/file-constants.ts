@@ -39,4 +39,11 @@ export const DOCUMENT_MIMETYPES = [
     'text/markdown',
 ];
 
-export const AUTHORIZED_FILE_EXTENSION = '.(png|jpeg|jpg|pdf|doc|docx|csv|gif|webp|xls|xlsx|odt|ods|odp|txt|rft|json|md)' as const;
+export const ALL_MIMETYPES = [
+    ...PDF_MIMETYPES,
+    ...IMAGE_MIMETYPES,
+    ...DOCUMENT_MIMETYPES,
+    ...CSV_MIMETYPES
+];
+
+export const AUTHORIZED_FILE_EXTENSION = /\.(pdf|png|jpe?g|gif|webp|csv|docx?|txt|json|md)$/i

@@ -1,4 +1,5 @@
 import { BaseApiReturn } from 'src/core/interfaces';
+import { User } from 'src/drizzle/schemas';
 
 // Params schemas
 export type CreateUserWithAccountSchema = {
@@ -34,7 +35,7 @@ export type UpdateAccountSchema = Pick<
   | 'sessionState'
 >;
 
-export type UpdateUser = Partial<{
+export type update = Partial<{
   email: string;
   fullName: string;
   refreshToken: string | null;
@@ -55,3 +56,9 @@ export type PKCEGeneratorResponse = {
   codeVerifier: string;
   codeChallenge: string;
 };
+
+
+export type UserPublic = Omit<
+  User,
+  'encryptionKey' | 'encryptionIv' | 'encryptionTag' | 'refreshToken' | 'password'
+>

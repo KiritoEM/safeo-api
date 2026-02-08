@@ -194,7 +194,7 @@ export class AuthService {
       },
     );
 
-    await this.userRepository.updateUser({ refreshToken });
+    await this.userRepository.update(cacheParam.id, { refreshToken });
 
     // audit log
     await this.logRepository.log({
@@ -392,7 +392,7 @@ export class AuthService {
     }
 
     // invalidate refresh token after usage
-    await this.userRepository.updateUser({ refreshToken: null });
+    await this.userRepository.update(user.id, { refreshToken: null });
 
     // audit log
     await this.logRepository.log({

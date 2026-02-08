@@ -43,7 +43,18 @@ export class SupabaseService {
     }
 
     // TODO: create signed URL for file access
-    async createSignedURL() {
+    async createSignedURL(fileMimeType: string, bucketPath: string, expiresIn: number): Promise<string> {
+        const bucket = this.getFileType(fileMimeType) === 'DOCUMENT'
+            ? this.documentBucket
+            : this.imageBucket;
 
+        const { data, error } = await this.supabase.storage
+            .from(bucket)
+            .createSignedUrl(bucketPath, expiresIn);
+
+
+        if (error) throw new BadRequestException(error.message);
+
+        return data.signedUrl;
     }
 }

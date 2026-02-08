@@ -118,7 +118,7 @@ export class OauthService {
   }
 
   // create refresh token and update user
-  async createRefreshToken(): Promise<User | null> {
+  async createRefreshToken(userId: string): Promise<User | null> {
     const refreshToken = this.jwtService.sign(
       {},
       {
@@ -126,7 +126,7 @@ export class OauthService {
       },
     );
 
-    const user = await this.userRepository.updateUser({ refreshToken });
+    const user = await this.userRepository.update(userId, { refreshToken });
 
     return user[0];
   }
@@ -142,7 +142,7 @@ export class OauthService {
     });
 
     // create refresh token
-    const updatedUser = await this.createRefreshToken();
+    const updatedUser = await this.createRefreshToken(userId);
 
     const JWTpayload = { sub: userId, email };
 

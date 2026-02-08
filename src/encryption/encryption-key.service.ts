@@ -29,7 +29,7 @@ export class EncryptionKeyService {
         };
     }
 
-    // decrypt kek
+    // decrypt KEK
     decryptAESKek(kekKey: string, IV: string, tag: string): string | null {
         const masterKey = this.configService.get<string>('encryption.keyMaster');
 
@@ -38,6 +38,16 @@ export class EncryptionKeyService {
         return aes256GcmDecrypt({
             encrypted: kekKey,
             key: masterKey,
+            IV,
+            tag
+        });
+    }
+
+    // decrypt DEK
+    decryptAESDEK(DekKey: string, KekKey: string, IV: string, tag: string): string | null {
+        return aes256GcmDecrypt({
+            encrypted: DekKey,
+            key: KekKey,
             IV,
             tag
         });

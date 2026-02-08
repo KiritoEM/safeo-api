@@ -7,7 +7,8 @@ export enum AUDIT_ACTIONS {
   LOGIN_VALID_OTP_ACTION = 'login_valid_otp',
   LOGIN_RESEND_OTP_ACTION = 'login_resend_otp',
   REFRESH_ACCESS_TOKEN_ACTION = 'refresh_access_token',
-  CREATE_DOCUMENT_ACTION = 'create_new_document'
+  CREATE_DOCUMENT_ACTION = 'create_new_document',
+  GET_ALL_USER_DOCUMENT = 'get_all_user_documents'
 }
 
 export enum AUDIT_TARGET {

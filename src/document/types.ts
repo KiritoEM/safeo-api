@@ -1,5 +1,8 @@
+import { DocumentAccessLevelEnum } from "src/core/enums/document-enums";
+import { FileSortingEnum, FileTypeEnum } from "src/core/enums/file-enums";
 import { BaseApiReturn } from "src/core/interfaces";
 import { Document } from "src/drizzle/schemas";
+import { UserPublic } from "src/user/types";
 
 // Params schemas
 export type CreateDocumentSchema = {
@@ -14,12 +17,25 @@ export type CreateDocumentSchema = {
     encryptionKey: string;
     encryptionIv: string;
     encryptionTag: string;
+    encryptedMetadata: Record<string, string>;
     accessLevel: 'private' | 'shareable';
 };
 
-// response schemas
-export type PublicDocument = Omit<Document, 'encryptionKey' | 'encryptionIv' | 'encryptionTag' | 'bucketPath' | 'fileName'>;
+export type GetDocumentsFilterSchema = {
+    accessLevel?: DocumentAccessLevelEnum;
+    fileType?: FileTypeEnum,
+    sort?: FileSortingEnum
+}
 
-export interface ICreateDocumentResponse extends BaseApiReturn {
-    data?: PublicDocument;
+// response schemas
+export type DocumentPublic = Omit<Document, 'encryptionKey' | 'encryptionIv' | 'encryptionTag' | 'bucketPath' | 'fileName' | 'encryptedMetadata'> & {
+    user?: UserPublic;
+    publicUrl?: string
+};
+
+export interface ICreateDocumentPublic extends BaseApiReturn {
+    data?: DocumentPublic;
+}
+export interface IGetAllDocumentPublic extends BaseApiReturn {
+    data: DocumentPublic[];
 }

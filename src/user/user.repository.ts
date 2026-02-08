@@ -5,7 +5,7 @@ import { Account, account, User, users } from 'src/drizzle/schemas';
 import {
   CreateUserSchema,
   CreateUserWithAccountSchema,
-  UpdateUser,
+  update,
 } from './types';
 import { UserStorageStatusEnum } from './enums';
 
@@ -90,7 +90,11 @@ export class UserRepository {
     });
   }
 
-  async updateUser(data: UpdateUser): Promise<User[]> {
-    return await this.db.update(users).set(data).returning();
+  async update(id: string, data: update): Promise<User[]> {
+    return await this.db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
   }
 }
