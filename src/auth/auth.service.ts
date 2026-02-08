@@ -3,6 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -25,7 +26,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
-import { EncryptionService } from 'src/encryption/encryption.service';
+import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +36,7 @@ export class AuthService {
     private sendOTPService: SendOtpService,
     private jwtService: JwtService,
     private logRepository: ActivityLogRepository,
-    private encryptionService: EncryptionService,
+    private encryptionKeyService: EncryptionKeyService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
   ) { }
 
@@ -342,22 +343,22 @@ export class AuthService {
       },
     );
 
-    // generate encryption key
-    const encryptionPayload = this.encryptionService.generateAESKek();
+    // generate KEK encryption key
+    const encryptionPayload = this.encryptionKeyService.generateAESKek();
 
     if (!encryptionPayload) {
-      throw new UnauthorizedException('Impossible de creer la cle de chiffrement');
+      throw new InternalServerErrorException('Impossible de créer la clé de chiffrement');
     }
 
     const userToAdd = {
       ...data,
-      encryptionKey: encryptionPayload.key,
+      encryptionKey: encryptionPayload.encrypted as string,
       encryptionIv: encryptionPayload.IV,
       encryptionTag: encryptionPayload.tag,
       refreshToken,
     };
 
-    const user = await this.userRepository.createUser(userToAdd);
+    const user = await this.userRepository.create(userToAdd);
 
     // audit log
     await this.logRepository.log({

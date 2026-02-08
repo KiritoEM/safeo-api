@@ -42,7 +42,7 @@ import {
 } from 'src/core/utils/pkce-utils';
 import { GeneratePKCECodesDto } from './dtos/generate-pkce-codes.dto';
 import * as types from 'src/user/types';
-import { AuthTypeEnum } from 'src/core/enums/auth_enums';
+import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 
 @ApiTags('OAuth')
 @Controller('oauth')

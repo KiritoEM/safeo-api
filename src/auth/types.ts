@@ -25,6 +25,7 @@ export interface IrefreshTokenResponse extends BaseApiReturn {
 export interface ISignupSendOtpResponse extends BaseApiReturn {
   verificationToken: string;
 }
+
 export type VerifyLoginResponse = Pick<CachedUserLogin, 'id' | 'email'> & {
   refreshToken: string;
 };
@@ -52,3 +53,7 @@ export type SendLoginEmailParams = {
   email: string;
   otpCode: string;
 };
+
+// user JWT Payload
+export type UserPayload = Pick<User, 'id' | 'email'>;
+

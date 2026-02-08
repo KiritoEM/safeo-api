@@ -7,6 +7,7 @@ import {
   CreateUserWithAccountSchema,
   UpdateUser,
 } from './types';
+import { UserStorageStatusEnum } from './enums';
 
 export type UserWithAccount = User & {
   account: Account | null;
@@ -17,7 +18,7 @@ export class UserRepository {
   constructor(
     @Inject('DrizzleAsyncProvider')
     private readonly db: drizzleProvider.DrizzleDB,
-  ) {}
+  ) { }
 
   async findUserById(id: string): Promise<User | null> {
     const user = await this.db.query.users.findFirst({
@@ -25,6 +26,18 @@ export class UserRepository {
     });
 
     return user ?? null;
+  }
+
+  async checkStorageStatus(id: string, fileToUploadSize: number): Promise<UserStorageStatusEnum> {
+    const user = await this.findUserById(id);
+
+    if (!user) return UserStorageStatusEnum.UNAVAILABLE;
+
+    if (user.storageLimits! == user.storageUsed!) return UserStorageStatusEnum.FULL;
+
+    if (user.storageLimits! <= fileToUploadSize + user.storageUsed!) return UserStorageStatusEnum.INSUFFICIENT;
+
+    return UserStorageStatusEnum.AVAILABLE;
   }
 
   async findUserByEmail(email: string): Promise<UserWithAccount | null> {
@@ -47,7 +60,7 @@ export class UserRepository {
     return user ?? null;
   }
 
-  async createUser(data: CreateUserSchema): Promise<User[]> {
+  async create(data: CreateUserSchema): Promise<User[]> {
     return await this.db.insert(users).values(data).returning();
   }
 

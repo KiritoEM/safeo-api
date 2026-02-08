@@ -9,22 +9,32 @@ import oauthConfig from './core/configs/oauth.config';
 import dbConfig from './core/configs/db.config';
 import redisConfig, { redisOptions } from './core/configs/redis.config';
 import { MailModule } from './mail/mail.module';
-import { AppService } from './app.service';
 import { OauthModule } from './oauth/oauth.module';
 import jwtConfig, { jwtOptions } from './core/configs/jwt.config';
 import { OtpModule } from './otp/otp.module';
 import { AccountModule } from './account/account.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
-import { EncryptionService } from './encryption/encryption.service';
-import { EncryptionModule } from './encryption/encryption.module';
+import { EncryptionKeyService } from './encryption/encryption-key.service';
+import { EncryptionKeyModule } from './encryption/encryption-key.module';
+import { DocumentModule } from './document/document.module';
+import { SupabaseModule } from './supabase/supabase.module';
 import mailConfig from './core/configs/mail.config';
 import encryptionConfig from './core/configs/encryption.config';
+import supabaseConfig from './core/configs/supabase.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [oauthConfig, dbConfig, redisConfig, mailConfig, jwtConfig, encryptionConfig],
+      load: [
+        oauthConfig,
+        dbConfig,
+        redisConfig,
+        mailConfig,
+        jwtConfig,
+        encryptionConfig,
+        supabaseConfig
+      ],
     }),
     OauthModule,
     DrizzleModule,
@@ -36,8 +46,10 @@ import encryptionConfig from './core/configs/encryption.config';
     OtpModule,
     AccountModule,
     ActivityLogsModule,
-    EncryptionModule,
+    EncryptionKeyModule,
+    DocumentModule,
+    SupabaseModule,
   ],
-  providers: [AppService, EncryptionService],
+  providers: [EncryptionKeyService],
 })
 export class AppModule { }

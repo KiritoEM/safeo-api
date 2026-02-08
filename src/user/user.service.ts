@@ -7,14 +7,14 @@ import {
   UpdateAccountSchema,
 } from './types';
 import { AccountRepository } from 'src/account/account.repository';
-import { AuthTypeEnum } from 'src/core/enums/auth_enums';
+import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 
 @Injectable()
 export class UserService {
   constructor(
     private userRepository: UserRepository,
     private accountRespository: AccountRepository,
-  ) {}
+  ) { }
 
   async getUserById(id: string): Promise<User | null> {
     return await this.userRepository.findUserById(id);
@@ -29,7 +29,7 @@ export class UserService {
     authType: AuthTypeEnum,
   ): Promise<User | null> {
     if (authType === AuthTypeEnum.CREDENTIAL) {
-      const user = await this.userRepository.createUser(
+      const user = await this.userRepository.create(
         userData as CreateUserSchema,
       );
 
