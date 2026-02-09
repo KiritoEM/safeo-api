@@ -21,6 +21,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import mailConfig from './core/configs/mail.config';
 import encryptionConfig from './core/configs/encryption.config';
 import supabaseConfig from './core/configs/supabase.config';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -36,6 +37,23 @@ import supabaseConfig from './core/configs/supabase.config';
         supabaseConfig
       ],
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 3,
+      },
+      {
+        name: 'medium',
+        ttl: 10000,
+        limit: 20
+      },
+      {
+        name: 'long',
+        ttl: 60000,
+        limit: 100
+      }
+    ]),
     OauthModule,
     DrizzleModule,
     UserModule,

@@ -14,6 +14,7 @@ import { GetAllDocumentQueryDTO, GetAllDocumentResponseDTO } from './dtos/get-al
 import { CustomFileValidator } from 'src/core/validators/file.validator';
 import type { MulterFile } from 'src/types/multer';
 import { UpdateDocumentDTO, UpdateDocumentResponseDTO } from './dtos/update-document.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
@@ -22,6 +23,8 @@ import { UpdateDocumentDTO, UpdateDocumentResponseDTO } from './dtos/update-docu
 export class DocumentController {
     constructor(private documentService: DocumentService, @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,) { }
 
+
+    @Throttle({ short: { limit: 20, ttl: 6000 } }) // 20/minute
     @Post('upload')
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('file'))
@@ -90,6 +93,7 @@ export class DocumentController {
         }
     }
 
+    @Throttle({ short: { limit: 20, ttl: 6000 } }) // 20/minute
     @Patch(':documentId')
     @HttpCode(HttpStatus.OK)
     @ApiParam({

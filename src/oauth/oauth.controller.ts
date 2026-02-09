@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Ip,
-  Logger,
   Post,
   Query,
   Res
@@ -37,12 +36,12 @@ import {
   ExchangeTokenDto,
   ExchangeTokenResponseDto,
 } from './dtos/exchange-token.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('OAuth')
+@Throttle({ default: { limit: 5, ttl: 60000 } }) // 5/min
 @Controller('oauth')
 export class OauthController {
-  private logger = new Logger(OauthController.name);
-
   constructor(
     private oauthService: OauthService,
   ) { }

@@ -4,8 +4,9 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import morgan from 'morgan';
 import { AllExceptionsFilter } from './core/configs/allexceptions.filter';
+import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableVersioning({
     type: VersioningType.URI,
@@ -14,6 +15,9 @@ async function bootstrap() {
   app.setGlobalPrefix('v1/api');
 
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // trust reverse proxy
+  app.set('trust proxy', 'loopback');
 
   app.enableCors({
     origin:

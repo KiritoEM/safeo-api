@@ -37,8 +37,10 @@ import {
   refreshAccessTokenDto,
   refreshAccessTokenResponseDto,
 } from './dtos/refresh-token.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
+@Throttle({ default: { limit: 5, ttl: 60000 } }) // 5/min
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -105,6 +107,7 @@ export class AuthController {
     };
   }
 
+  @Throttle({ short: { limit: 2, ttl: 3000 } }) // 1/3second
   @Post('login/verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -206,6 +209,7 @@ export class AuthController {
     };
   }
 
+  @Throttle({ short: { limit: 1, ttl: 2000 } }) // 1/2.5second
   @Post('signup/verify-otp')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -249,6 +253,7 @@ export class AuthController {
     };
   }
 
+  @Throttle({ short: { limit: 2, ttl: 3000 } }) // 2/3second
   @Post('refresh-access-token')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -264,7 +269,6 @@ export class AuthController {
   })
   async refreshAccessToken(
     @Body() refreshTokenDto: refreshAccessTokenDto,
-    @Req() req: Request,
     @Ip() ip
   ): Promise<IrefreshTokenResponse> {
     const { accessToken } = await this.authService.refreshAccesToken(
