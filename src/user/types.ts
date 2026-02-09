@@ -14,14 +14,12 @@ export type CreateUserWithAccountSchema = {
   tokenType: string;
   sessionState: string;
   providerAccountId: string;
-  encryptionKey?: string;
-  encryptionIv?: string;
-  encryptionTag?: string;
+  encryptedKey?: string;
 };
 
 export type CreateUserSchema = Pick<
   CreateUserWithAccountSchema,
-  'email' | 'fullName' | 'encryptionKey' | 'encryptionIv' | 'encryptionTag'
+  'email' | 'fullName' | 'encryptedKey'
 > & {
   password: string;
 };

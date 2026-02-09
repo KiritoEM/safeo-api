@@ -6,15 +6,12 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  InternalServerErrorException,
   Ip,
   Logger,
   Post,
   Query,
-  Res,
-  UnauthorizedException,
+  Res
 } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
 import {
   ApiBody,
   ApiCreatedResponse,
@@ -24,8 +21,14 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import express from 'express';
-import { UserService } from 'src/user/user.service';
-import { IUserFromTokenResponse } from 'src/core/interfaces';
+import {
+  generateCodeVerifier,
+  generateCodeChallenge,
+} from 'src/core/utils/pkce-utils';
+import { GeneratePKCECodesDto } from './dtos/generate-pkce-codes.dto';
+import * as types from 'src/user/types';
+import { renderRedirectionTemplate } from './templates/redirection_fallback_template';
+import { OAUTH_ERROR_MESSAGES } from './constants';
 import {
   AuthorizeUrlResponseDto,
   GenerateAuthUrlDto,
@@ -34,15 +37,6 @@ import {
   ExchangeTokenDto,
   ExchangeTokenResponseDto,
 } from './dtos/exchange-token.dto';
-import { OAUTH_ERROR_MESSAGES } from './constants';
-import { renderRedirectionTemplate } from './templates/redirection_fallback_template';
-import {
-  generateCodeVerifier,
-  generateCodeChallenge,
-} from 'src/core/utils/pkce-utils';
-import { GeneratePKCECodesDto } from './dtos/generate-pkce-codes.dto';
-import * as types from 'src/user/types';
-import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 
 @ApiTags('OAuth')
 @Controller('oauth')
@@ -50,8 +44,7 @@ export class OauthController {
   private logger = new Logger(OauthController.name);
 
   constructor(
-    private oauhtService: OauthService,
-    private userService: UserService,
+    private oauthService: OauthService,
   ) { }
 
   @Get('pkce-generator')
@@ -90,7 +83,7 @@ export class OauthController {
   ): types.AuthorizeUrlResponse {
     return {
       statusCode: HttpStatus.CREATED,
-      authUrl: this.oauhtService.generateGoogleAuthUrl(
+      authUrl: this.oauthService.generateGoogleAuthUrl(
         generateAuthUrlDto.codeChallenge,
       ),
       message: 'Lien de connexion généré avec succès',
@@ -116,82 +109,16 @@ export class OauthController {
     @Body() exchangeTokenDto: ExchangeTokenDto,
     @Ip() ip
   ): Promise<types.ExchangeTokenResponse> {
-    try {
-      // exchange code to token
-      const responsePayload = await firstValueFrom(
-        this.oauhtService.exchangeCodeToToken(
-          exchangeTokenDto.codeVerifier,
-          exchangeTokenDto.authorizationCode,
-        ),
-      );
+    const tokensPayload = await this.oauthService.exchangeCodeToToken(
+      exchangeTokenDto.codeVerifier,
+      exchangeTokenDto.authorizationCode,
+      ip
+    );
 
-      const userInfoPayload = await firstValueFrom(
-        this.oauhtService.getUserFromToken(responsePayload.access_token),
-      );
-
-      if (!userInfoPayload) throw new BadRequestException();
-
-      const user = await this.userService.getUserByEmail(
-        (userInfoPayload as IUserFromTokenResponse).email,
-      );
-
-      // create user if not exist and create account
-      if (!user) {
-        const newUser = await this.userService.createNewUser(
-          {
-            email: (userInfoPayload as IUserFromTokenResponse).email,
-            fullName: (userInfoPayload as IUserFromTokenResponse).name,
-            type: '0Auth',
-            provider: 'GOOGLE',
-            accessToken: responsePayload.access_token,
-            tokenType: 'Bearer',
-            expiresAt: responsePayload.expires_in,
-            scope: responsePayload.scope,
-            idToken: responsePayload.id_token,
-            sessionState: '',
-            providerAccountId: (userInfoPayload as IUserFromTokenResponse).sub,
-          },
-          AuthTypeEnum.OAUTH,
-        );
-
-        if (!newUser)
-          throw new BadRequestException("Impossible de créer l'utilisateur");
-
-        return {
-          statusCode: HttpStatus.OK,
-          ...(await this.oauhtService.generateTokens(
-            newUser.id,
-            newUser.email,
-            ip
-          )),
-        };
-      }
-
-      //  update account
-      await this.userService.updateAccount(user.id, {
-        accessToken: responsePayload.access_token,
-        tokenType: 'Bearer',
-        expiresAt: responsePayload.expires_in,
-        scope: responsePayload.scope,
-        idToken: responsePayload.id_token,
-        sessionState: '',
-      });
-
-      return {
-        statusCode: HttpStatus.OK,
-        ...(await this.oauhtService.generateTokens(user.id, user.email)),
-      };
-    } catch (err) {
-      this.logger.error('An error was occurend when exchanging token: ', err);
-
-      if (err instanceof UnauthorizedException) {
-        throw err;
-      }
-
-      throw new InternalServerErrorException(
-        'Impossible d’échanger le code d’autorisation avec Google. Veuillez réessayer.',
-      );
-    }
+    return {
+      statusCode: HttpStatus.OK,
+      ...tokensPayload
+    };
   }
 
   @Get('google/callback')

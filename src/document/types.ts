@@ -14,10 +14,8 @@ export type CreateDocumentSchema = {
     fileMimeType: string;
     filePath: string;
     bucketPath?: string;
-    encryptionKey: string;
-    encryptionIv: string;
-    encryptionTag: string;
-    encryptedMetadata: Record<string, string>;
+    encryptedKey: string;
+    encryptedMetadata: string;
     accessLevel: 'private' | 'shareable';
 };
 
@@ -32,7 +30,7 @@ export type UpdateDocumentSchema = Partial<{
 }>
 
 // response schemas
-export type DocumentPublic = Omit<Document, 'encryptionKey' | 'encryptionIv' | 'encryptionTag' | 'bucketPath' | 'fileName' | 'encryptedMetadata'> & {
+export type DocumentPublic = Omit<Document, 'encryptedKey' | 'fileName' | 'encryptedMetadata'> & {
     user?: UserPublic;
     publicUrl?: string
 };

@@ -3,7 +3,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import * as cacheManager from 'cache-manager';
 import { Inject, Injectable, InternalServerErrorException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
-import { aes256GcmDecrypt, aes256GcmEncrypt } from 'src/core/utils/crypto-utils';
+import { aes256GcmDecrypt, aes256GcmEncrypt, decomposeEncryptedData, formatEncryptedData } from 'src/core/utils/crypto-utils';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { UserRepository } from 'src/user/user.repository';
@@ -51,10 +51,12 @@ export class DocumentService {
         }
 
         // decrypt KEK key
+        const KekKeyPayload = decomposeEncryptedData(user.encryptedKey!);
+
         const kekKey = this.encryptionKeyService.decryptAESKek(
-            user.encryptionKey!,
-            user.encryptionIv!,
-            user.encryptionTag!
+            KekKeyPayload.IV,
+            KekKeyPayload.encrypted as string,
+            KekKeyPayload.tag
         );
 
         if (!kekKey) {
@@ -81,9 +83,9 @@ export class DocumentService {
             bucketPath: path
         };
 
-        const { encrypted, IV, tag } = aes256GcmEncrypt(
+        const encryptedMetadataPayload = aes256GcmEncrypt(
             JSON.stringify(metadata),
-            DekEncryptionKeyPayload.DekKey
+            DekEncryptionKeyPayload.plainDekKey
         );
 
         // add file metadata to DB
@@ -94,15 +96,8 @@ export class DocumentService {
             fileSize: file.size,
             fileType: getFileType(file.mimetype) as CreateDocumentSchema['fileType'],
             fileMimeType: file.mimetype,
-            encryptedMetadata: {
-                encrypted,
-                IV,
-                tag
-            },
-            encryptionKey: DekEncryptionKeyPayload.encrypted as string,
-            encryptionIv: DekEncryptionKeyPayload.IV,
-            encryptionTag: DekEncryptionKeyPayload.tag,
-
+            encryptedMetadata: formatEncryptedData(encryptedMetadataPayload.IV, encryptedMetadataPayload.encrypted, encryptedMetadataPayload.tag),
+            encryptedKey: formatEncryptedData(DekEncryptionKeyPayload.IV, DekEncryptionKeyPayload.encrypted as string, DekEncryptionKeyPayload.tag),
             accessLevel,
             filePath: `${Date.now()}-${file.originalname}`
         });
@@ -117,9 +112,7 @@ export class DocumentService {
         });
 
         const {
-            encryptionKey,
-            encryptionIv,
-            encryptionTag,
+            encryptedKey,
             encryptedMetadata,
             fileName,
             ...filteredDocument
@@ -150,13 +143,15 @@ export class DocumentService {
         }
 
         // decrypt KEK key
-        const KekKey = this.encryptionKeyService.decryptAESKek(
-            user.encryptionKey!,
-            user.encryptionIv!,
-            user.encryptionTag!
+        const decomposedKekPayload = decomposeEncryptedData(user.encryptedKey!);
+
+        const KekKeyPlain = this.encryptionKeyService.decryptAESKek(
+            decomposedKekPayload.encrypted as string,
+            decomposedKekPayload.IV,
+            decomposedKekPayload.tag
         );
 
-        if (!KekKey) {
+        if (!KekKeyPlain) {
             throw new InternalServerErrorException('Impossible de récupérer la clé de chiffrement Kek');
         }
 
@@ -165,35 +160,33 @@ export class DocumentService {
         // attach publicURL to document
         const documentsWithPublicUrl = allDocuments.map(async (doc) => {
             // decrypt DEK key
+            const decomposedDekPayload = decomposeEncryptedData(doc.encryptedKey!);
+
             const DekKey = this.encryptionKeyService.decryptAESDEK(
-                doc.encryptionKey as string,
-                KekKey,
-                doc.encryptionIv as string,
-                doc.encryptionTag as string
+                decomposedDekPayload.encrypted as string,
+                KekKeyPlain,
+                decomposedDekPayload.IV,
+                decomposedDekPayload.tag
             );
 
             // Get encrypted metadata
-            const metadata = doc.encryptedMetadata as {
-                encrypted: string;
-                IV: string;
-                tag: string
-            };
+            const metadata = doc.encryptedMetadata as string;
 
             // Decrypt metadata
+            const decomposedEncryptedMetadataPayload = decomposeEncryptedData(doc.encryptedKey!);
+
             const decryptedMetadata = aes256GcmDecrypt({
-                encrypted: metadata.encrypted,
-                IV: metadata.IV,
-                tag: metadata.tag,
+                encrypted: decomposedEncryptedMetadataPayload.encrypted,
+                IV: decomposedEncryptedMetadataPayload.IV,
+                tag: decomposedEncryptedMetadataPayload.tag,
                 key: DekKey as string
             });
 
             const { bucketPath } = JSON.parse(decryptedMetadata) as Record<string, string>;
 
             const {
-                encryptionKey,
-                encryptionIv,
-                encryptionTag,
-                encryptedMetadata: _,
+                encryptedKey,
+                encryptedMetadata,
                 fileName,
                 ...filteredDocument
             } = doc;

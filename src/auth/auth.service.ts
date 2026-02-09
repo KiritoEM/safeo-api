@@ -12,7 +12,7 @@ import * as cacheManager from 'cache-manager';
 import { comparePassword, hashPassword } from 'src/core/utils/hashing_utils';
 import { User } from 'src/drizzle/schemas';
 import { OtpService } from 'src/otp/otp.service';
-import { generateRandomString } from 'src/core/utils/crypto-utils';
+import { formatEncryptedData, generateRandomString } from 'src/core/utils/crypto-utils';
 import {
   CachedUserLogin,
   CachedUserSignup,
@@ -352,9 +352,7 @@ export class AuthService {
 
     const userToAdd = {
       ...data,
-      encryptionKey: encryptionPayload.encrypted as string,
-      encryptionIv: encryptionPayload.IV,
-      encryptionTag: encryptionPayload.tag,
+      encryptedKey: formatEncryptedData(encryptionPayload.IV, encryptionPayload.encrypted as string, encryptionPayload.tag),
       refreshToken,
     };
 

@@ -5,7 +5,7 @@ export interface BaseApiReturn {
   message: string;
 }
 
-export interface IExchangeCodeToTokenResponse {
+export interface IRequestGoogleTokenResponse {
   access_token: string;
   id_token: string;
   refresh_token: string;

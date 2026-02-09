@@ -13,9 +13,7 @@ export const users = pgTable('users', {
   email: text('email').unique().notNull(),
   fullName: text('full_name').notNull(),
   password: text('password'),
-  encryptionKey: text('encryption_key'),
-  encryptionIv: text('encryption_iv'),
-  encryptionTag: text('encryption_tag'),
+  encryptedKey: text('encrypted_key'),
   storageLimits: bigint('storage_limits', { mode: 'number' }).default(
     0.5 * 1024 * 1024 * 1024,
   ),

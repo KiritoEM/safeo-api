@@ -25,7 +25,7 @@ export class EncryptionKeyService {
 
         return {
             ...aes256GcmEncrypt(randomKey, kekKey),
-            DekKey: randomKey
+            plainDekKey: randomKey
         };
     }
 

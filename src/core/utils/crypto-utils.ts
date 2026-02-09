@@ -99,3 +99,15 @@ export const aes256GcmEncryptBuffer = (buffer: Buffer, key: string): Promise<Aes
       .on('error', reject)
   })
 };
+
+export const formatEncryptedData = (IV: string, encrytped: string, tag: string): string => `${IV}:${encrytped}:${tag}`;
+
+export const decomposeEncryptedData = (encrypted: string): AesGcmPayloadSchema => {
+  const decomposedEncrypted: string[] = encrypted.split(':');
+
+  return {
+    IV: decomposedEncrypted[0],
+    encrypted: decomposedEncrypted[1],
+    tag: decomposedEncrypted[2]
+  }
+};

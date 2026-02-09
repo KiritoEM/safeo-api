@@ -7,11 +7,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Observable, throwError } from 'rxjs';
+import { firstValueFrom, Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AxiosError, AxiosResponse } from 'axios';
 import {
-  IExchangeCodeToTokenResponse,
+  IRequestGoogleTokenResponse,
   IUserFromTokenResponse,
 } from 'src/core/interfaces';
 import { generateRandomString } from 'src/core/utils/crypto-utils';
@@ -27,6 +27,8 @@ import {
 } from './constants';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
+import { UserService } from 'src/user/user.service';
+import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 
 @Injectable()
 export class OauthService {
@@ -36,6 +38,7 @@ export class OauthService {
     private httpService: HttpService,
     private jwtService: JwtService,
     private logRepository: ActivityLogRepository,
+    private userService: UserService,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
   ) { }
 
@@ -57,41 +60,116 @@ export class OauthService {
     return `${GOOGLE_AUTHORIZE_REQUEST_URL}?${params.toString()}`;
   }
 
-  // exchange authorization code to access token
-  exchangeCodeToToken(
+  // Request token and obtain access token
+  async requestGoogleToken(
     codeVerifier: string,
     code: string,
-  ): Observable<IExchangeCodeToTokenResponse> {
+  ): Promise<IRequestGoogleTokenResponse> {
     if (!codeVerifier || !code)
       throw new BadRequestException('Le code et code_verifier est requis');
 
-    return this.httpService
-      .post<IExchangeCodeToTokenResponse>(
-        GOOGLE_TOKEN_REQUEST_URL,
-        new URLSearchParams({
-          client_id: this.configService.get<string>('oauth.google.clientId')!,
-          client_secret: this.configService.get<string>(
-            'oauth.google.clientSecret',
-          )!,
-          code_verifier: codeVerifier,
-          code,
-          grant_type: 'authorization_code',
-          redirect_uri: this.configService.get<string>(
-            'oauth.google.redirectUri',
-          )!,
-        }).toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+    return firstValueFrom(
+      this.httpService
+        .post<IRequestGoogleTokenResponse>(
+          GOOGLE_TOKEN_REQUEST_URL,
+          new URLSearchParams({
+            client_id: this.configService.get<string>('oauth.google.clientId')!,
+            client_secret: this.configService.get<string>(
+              'oauth.google.clientSecret',
+            )!,
+            code_verifier: codeVerifier,
+            code,
+            grant_type: 'authorization_code',
+            redirect_uri: this.configService.get<string>(
+              'oauth.google.redirectUri',
+            )!,
+          }).toString(),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
           },
-        },
-      )
-      .pipe(
-        map(
-          (response: AxiosResponse<IExchangeCodeToTokenResponse>) =>
-            response.data,
+        )
+        .pipe(
+          map(
+            (response: AxiosResponse<IRequestGoogleTokenResponse>) =>
+              response.data,
+          ),
         ),
+    );
+  }
+
+  // exchange authorization code to access token 
+  async exchangeCodeToToken(
+    codeVerifier: string,
+    code: string,
+    ipAddress?: string,
+  ) {
+    if (!codeVerifier || !code)
+      throw new BadRequestException('Le code et code_verifier est requis');
+
+    // Request google token
+    const responsePayload = await this.requestGoogleToken(codeVerifier, code);
+
+    // get user info from using access_token
+    const userInfoPayload = await firstValueFrom(
+      this.getUserFromToken(responsePayload.access_token),
+    );
+
+    if (!userInfoPayload) throw new BadRequestException();
+
+    const user = await this.userService.getUserByEmail(
+      (userInfoPayload as IUserFromTokenResponse).email,
+    );
+
+    // create user if not exist and create account
+    if (!user) {
+      const newUser = await this.userService.createNewUser(
+        {
+          email: (userInfoPayload as IUserFromTokenResponse).email,
+          fullName: (userInfoPayload as IUserFromTokenResponse).name,
+          type: '0Auth',
+          provider: 'GOOGLE',
+          accessToken: responsePayload.access_token,
+          tokenType: 'Bearer',
+          expiresAt: responsePayload.expires_in,
+          scope: responsePayload.scope,
+          idToken: responsePayload.id_token,
+          sessionState: '',
+          providerAccountId: (userInfoPayload as IUserFromTokenResponse).sub,
+        },
+        AuthTypeEnum.OAUTH,
       );
+
+      if (!newUser)
+        throw new BadRequestException("Impossible de créer l'utilisateur");
+
+      // return generated auth tokens
+      return {
+        ...(
+          await this.generateTokens(
+            newUser.id,
+            newUser.email,
+            ipAddress,
+          )
+        )
+      };
+    }
+
+    // update account
+    await this.userService.updateAccount(user.id, {
+      accessToken: responsePayload.access_token,
+      tokenType: 'Bearer',
+      expiresAt: responsePayload.expires_in,
+      scope: responsePayload.scope,
+      idToken: responsePayload.id_token,
+      sessionState: '',
+    });
+
+    // return generated auth tokens
+    return {
+      ...(await this.generateTokens(user.id, user.email)),
+    };
   }
 
   // get user informations from access token
@@ -138,7 +216,7 @@ export class OauthService {
       action: AUDIT_ACTIONS.OAUTH_ACTION,
       target: AUDIT_TARGET.ACCOUNT,
       userId,
-      ipAddress
+      ipAddress,
     });
 
     // create refresh token

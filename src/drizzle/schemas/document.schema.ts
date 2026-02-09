@@ -6,7 +6,6 @@ import {
   text,
   timestamp,
   uuid,
-  jsonb,
 } from 'drizzle-orm/pg-core';
 import { timestamps } from './column-helper';
 import { users } from './user.schema';
@@ -29,10 +28,8 @@ export const documents = pgTable('document', {
   fileSize: bigint('file_size', { mode: 'number' }).notNull(),
   fileMimeType: text('file_mimetype').notNull(),
   fileType: documentTypeEnum().default('docs').notNull(),
-  encryptedMetadata: jsonb('encrypted_metadata').notNull(),
-  encryptionKey: text('encryption_key').notNull(),
-  encryptionIv: text('encryption_iv').notNull(),
-  encryptionTag: text('encryption_tag').notNull(),
+  encryptedMetadata: text('encrypted_metadata').notNull(),
+  encryptedKey: text('encrypt_key').notNull(),
   accessLevel: documentAccessLevelEnum(),
   isDeleted: boolean('is_deleted').default(false),
   deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
