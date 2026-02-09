@@ -18,7 +18,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { LoginDTO, LoginResponseDTO } from './dtos/login.dto';
 import {
@@ -44,8 +43,7 @@ import { Throttle } from '@nestjs/throttler';
 @Controller('auth')
 export class AuthController {
   constructor(
-    private authService: AuthService,
-    private jwtService: JwtService,
+    private authService: AuthService
   ) { }
 
   @Post('login')
@@ -132,15 +130,9 @@ export class AuthController {
       ip
     );
 
-    // create JWT Token
-    const JWTPayload = {
-      id: otpVerificationResponse.id,
-      email: otpVerificationResponse.email,
-    };
-
     return {
       statusCode: HttpStatus.OK,
-      accessToken: this.jwtService.sign(JWTPayload),
+      accessToken: otpVerificationResponse.accessToken,
       refreshToken: otpVerificationResponse.refreshToken,
       message: 'Connexion réussie',
     };
@@ -239,16 +231,10 @@ export class AuthController {
       ip
     );
 
-    // create JWT Token
-    const JWTPayload = {
-      id: createdUser.id,
-      email: createdUser.email,
-    };
-
     return {
       statusCode: HttpStatus.CREATED,
-      accessToken: this.jwtService.sign(JWTPayload),
-      refreshToken: createdUser.refreshToken as string,
+      accessToken: createdUser.accessToken,
+      refreshToken: createdUser.refreshToken,
       message: 'Inscription réussie! Bienvenue sur Safeo.',
     };
   }

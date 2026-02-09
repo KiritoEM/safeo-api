@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Request } from "express";
-import { AuthService } from "../auth.service";
 import { UserPayload } from "../types";
+import { JwtUtilsService } from "src/jwt/jwt-utils.service";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
-        private authService: AuthService
+        private jwtService: JwtUtilsService
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -25,7 +25,7 @@ export class AuthGuard implements CanActivate {
         }
 
         try {
-            const payload = await this.authService.verifyToken(token) as UserPayload;
+            const payload = await this.jwtService.verifyToken(token) as UserPayload;
             request['user'] = payload;
         }
         catch (err) {

@@ -28,6 +28,7 @@ export interface ISignupSendOtpResponse extends BaseApiReturn {
 
 export type VerifyLoginResponse = Pick<CachedUserLogin, 'id' | 'email'> & {
   refreshToken: string;
+  accessToken: string;
 };
 
 // cached params types

@@ -6,9 +6,10 @@ import { MailModule } from 'src/mail/mail.module';
 import { OtpModule } from 'src/otp/otp.module';
 import { SendOtpService } from './send-otp.service';
 import { EncryptionKeyModule } from 'src/encryption/encryption-key.module';
+import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
 
 @Module({
-  providers: [AuthService, SendOtpService],
+  providers: [AuthService, SendOtpService, JwtUtilsService],
   controllers: [AuthController],
   imports: [
     forwardRef(() => UserModule),

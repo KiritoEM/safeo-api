@@ -1,4 +1,3 @@
-import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
@@ -31,6 +30,7 @@ import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { UserService } from 'src/user/user.service';
 import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
+import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
 
 @Injectable()
 export class OauthService {
@@ -38,7 +38,7 @@ export class OauthService {
     private userRepository: UserRepository,
     private configService: ConfigService,
     private httpService: HttpService,
-    private jwtService: JwtService,
+    private jwtService: JwtUtilsService,
     private logRepository: ActivityLogRepository,
     private userService: UserService,
     private encryptionKeyService: EncryptionKeyService,
@@ -128,11 +128,11 @@ export class OauthService {
     // create user if not exist and create account
     if (!user) {
       // generate KEK encryption key
-          const encryptionPayload = this.encryptionKeyService.generateAESKek();
-      
-          if (!encryptionPayload) {
-            throw new InternalServerErrorException('Impossible de créer la clé de chiffrement');
-          }
+      const encryptionPayload = this.encryptionKeyService.generateAESKek();
+
+      if (!encryptionPayload) {
+        throw new InternalServerErrorException('Impossible de créer la clé de chiffrement');
+      }
 
       const newUser = await this.userService.createNewUser(
         {
@@ -151,6 +151,7 @@ export class OauthService {
         },
         AuthTypeEnum.OAUTH,
       );
+
 
       if (!newUser)
         throw new BadRequestException("Impossible de créer l'utilisateur");
@@ -208,7 +209,7 @@ export class OauthService {
 
   // create refresh token and update user
   async createRefreshToken(userId: string): Promise<User | null> {
-    const refreshToken = this.jwtService.sign(
+    const refreshToken = await this.jwtService.createJWT(
       {},
       {
         expiresIn: JWT_REFRESH_TOKEN_DURATION,
@@ -236,7 +237,7 @@ export class OauthService {
     const JWTpayload = { sub: userId, email };
 
     return {
-      accessToken: await this.jwtService.signAsync(JWTpayload),
+      accessToken: await this.jwtService.createJWT(JWTpayload),
       refreshToken: updatedUser?.refreshToken as string,
       message: 'Utilisateur connecté avec succés avec Google',
     };

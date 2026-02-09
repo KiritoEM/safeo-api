@@ -6,10 +6,11 @@ import { DrizzleModule } from 'src/drizzle/drizzle.module';
 import { UserModule } from 'src/user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { EncryptionKeyModule } from 'src/encryption/encryption-key.module';
+import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
 
 @Module({
   controllers: [OauthController],
-  providers: [OauthService],
+  providers: [OauthService, JwtUtilsService],
   imports: [
     HttpModule,
     DrizzleModule,

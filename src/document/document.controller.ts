@@ -1,20 +1,20 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Ip, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiPayloadTooLargeResponse, ApiTags, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import * as cacheManager from 'cache-manager';
 import { AuthGuard } from 'src/auth/guards/jwt.guard';
 import { DocumentAccessLevelEnum } from 'src/core/enums/document-enums';
 import { UserReq } from 'src/core/decorators/user.decorator';
 import * as types from 'src/auth/types';
-import { ICreateDocumentPublic, IGetAllDocumentPublic, IUpdateDocumentPublic } from './types';
-import { DocumentService } from './document.service';
-import { UploadDocumentDTO, UploadDocumentPublicDTO } from './dtos/upload-document.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { GetAllDocumentQueryDTO, GetAllDocumentResponseDTO } from './dtos/get-all-document.dto';
 import { CustomFileValidator } from 'src/core/validators/file.validator';
 import type { MulterFile } from 'src/types/multer';
 import { UpdateDocumentDTO, UpdateDocumentResponseDTO } from './dtos/update-document.dto';
-import { Throttle } from '@nestjs/throttler';
+import { DocumentService } from './document.service';
+import { GetAllDocumentQueryDTO, GetAllDocumentResponseDTO } from './dtos/get-all-document.dto';
+import { ICreateDocumentPublic, IGetAllDocumentPublic, IUpdateDocumentPublic } from './types';
+import { UploadDocumentDTO, UploadDocumentPublicDTO } from './dtos/upload-document.dto';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
