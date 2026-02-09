@@ -21,20 +21,6 @@ export class UserDto {
     fullName!: string;
 
     @ApiProperty({
-        type: 'string',
-        required: false,
-        description: 'Mot de passe de l\'utilisateur (optionnel)',
-    })
-    password?: string;
-
-    @ApiProperty({
-        type: 'string',
-        required: false,
-        description: 'Clé chiffrée de l\'utilisateur (optionnel)',
-    })
-    encryptedKey?: string;
-
-    @ApiProperty({
         type: 'number',
         required: false,
         description: 'Limite de stockage en octets (défaut : 0.5 GB)',
@@ -57,13 +43,6 @@ export class UserDto {
         default: true,
     })
     isActive?: boolean;
-
-    @ApiProperty({
-        type: 'string',
-        required: false,
-        description: 'Token de rafraîchissement (optionnel)',
-    })
-    refreshToken?: string;
 
     @ApiProperty({
         type: 'string',

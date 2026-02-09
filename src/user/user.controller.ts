@@ -1,5 +1,5 @@
 import { UserService } from './user.service';
-import { Controller, Get, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Ip, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/jwt.guard';
 import * as types from 'src/auth/types';
 import { UserReq } from 'src/core/decorators/user.decorator';
@@ -25,8 +25,8 @@ export class UserController {
     @ApiNotFoundResponse({
         description: 'Utilisateur introuvable',
     })
-    async getUserInfo(@UserReq() userReq: types.UserPayload): Promise<IGetUserInfoResponse> {
-        const user = await this.userService.getUserById(userReq.id);
+    async getUserInfo(@UserReq() userReq: types.UserPayload, @Ip() Ip): Promise<IGetUserInfoResponse> {
+        const user = await this.userService.getUserById(userReq.id, Ip);
 
         return {
             statusCode: HttpStatus.OK,
