@@ -25,6 +25,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { DocumentSharesController } from './document-shares/document-shares.controller';
 import { DocumentSharesService } from './document-shares/document-shares.service';
 import { DocumentSharesModule } from './document-shares/document-shares.module';
+import { JwtUtilsModule } from './jwt-utils/jwt-utils.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { DocumentSharesModule } from './document-shares/document-shares.module';
     DocumentModule,
     SupabaseModule,
     DocumentSharesModule,
+    JwtUtilsModule,
   ],
   providers: [EncryptionKeyService, DocumentSharesService],
   controllers: [DocumentSharesController],

@@ -90,6 +90,7 @@ export class OauthController {
   }
 
   @Post('google/exchange-token')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
       "Échanger le code d'autorisation contre un token et insérer l'utilisateur dans la base de données",
@@ -103,7 +104,6 @@ export class OauthController {
     description:
       "Le code d'autorisation est invalide, expiré ou a déjà été utilisé",
   })
-  @HttpCode(HttpStatus.OK)
   async exchangeToken(
     @Body() exchangeTokenDto: ExchangeTokenDto,
     @Ip() ip
