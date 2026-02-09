@@ -50,6 +50,11 @@ export interface ExchangeTokenResponse extends BaseApiReturn {
   refreshToken: string;
 }
 
+export interface IGetUserInfoResponse extends BaseApiReturn {
+  user?: UserPublic;
+}
+
+
 export type PKCEGeneratorResponse = {
   codeVerifier: string;
   codeChallenge: string;
@@ -58,5 +63,5 @@ export type PKCEGeneratorResponse = {
 
 export type UserPublic = Omit<
   User,
-  'encryptionKey' | 'encryptionIv' | 'encryptionTag' | 'refreshToken' | 'password'
+  'encryptedKey' | 'refreshToken' | 'password'
 >
