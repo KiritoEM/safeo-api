@@ -22,6 +22,9 @@ import mailConfig from './core/configs/mail.config';
 import encryptionConfig from './core/configs/encryption.config';
 import supabaseConfig from './core/configs/supabase.config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { DocumentSharesController } from './document-shares/document-shares.controller';
+import { DocumentSharesService } from './document-shares/document-shares.service';
+import { DocumentSharesModule } from './document-shares/document-shares.module';
 
 @Module({
   imports: [
@@ -67,7 +70,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
     EncryptionKeyModule,
     DocumentModule,
     SupabaseModule,
+    DocumentSharesModule,
   ],
-  providers: [EncryptionKeyService],
+  providers: [EncryptionKeyService, DocumentSharesService],
+  controllers: [DocumentSharesController],
 })
 export class AppModule { }

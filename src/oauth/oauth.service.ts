@@ -234,7 +234,7 @@ export class OauthService {
     // create refresh token
     const updatedUser = await this.createRefreshToken(userId);
 
-    const JWTpayload = { sub: userId, email };
+    const JWTpayload = { id: userId, email };
 
     return {
       accessToken: await this.jwtService.createJWT(JWTpayload),
