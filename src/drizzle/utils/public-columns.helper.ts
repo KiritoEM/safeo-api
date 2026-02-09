@@ -1,15 +1,13 @@
 import { getTableColumns } from "drizzle-orm";
 import { documents, users } from "../schemas";
 
-export const { encryptionIv: docIv,
-    encryptionKey: docKey, encryptionTag:
-    docTag,
+export const {
+    encryptedKey: docEncryptedKey,
     ...documentColumnsPublic
 } = getTableColumns(documents);
 
-export const { password,
-    encryptionIv: userIv,
-    encryptionKey: userKey,
-    encryptionTag: userTag,
+export const {
+    password,
+    encryptedKey: userEncryptedKey,
     refreshToken,
     ...userColumnsPublic } = getTableColumns(users);

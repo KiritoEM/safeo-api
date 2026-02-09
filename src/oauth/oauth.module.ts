@@ -5,6 +5,7 @@ import { HttpModule } from '@nestjs/axios';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
 import { UserModule } from 'src/user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { EncryptionKeyModule } from 'src/encryption/encryption-key.module';
 
 @Module({
   controllers: [OauthController],
@@ -14,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
     DrizzleModule,
     ConfigModule,
     UserModule,
+    EncryptionKeyModule
   ],
 })
 export class OauthModule { }

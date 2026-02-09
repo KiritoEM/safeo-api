@@ -5,6 +5,7 @@ import {
   BadRequestException,
   Inject,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom, Observable, throwError } from 'rxjs';
@@ -14,7 +15,7 @@ import {
   IRequestGoogleTokenResponse,
   IUserFromTokenResponse,
 } from 'src/core/interfaces';
-import { generateRandomString } from 'src/core/utils/crypto-utils';
+import { formatEncryptedData, generateRandomString } from 'src/core/utils/crypto-utils';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
 import { UserRepository } from 'src/user/user.repository';
@@ -29,6 +30,7 @@ import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repositor
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { UserService } from 'src/user/user.service';
 import { AuthTypeEnum } from 'src/core/enums/auth-enums';
+import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
 
 @Injectable()
 export class OauthService {
@@ -39,6 +41,7 @@ export class OauthService {
     private jwtService: JwtService,
     private logRepository: ActivityLogRepository,
     private userService: UserService,
+    private encryptionKeyService: EncryptionKeyService,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
   ) { }
 
@@ -124,6 +127,13 @@ export class OauthService {
 
     // create user if not exist and create account
     if (!user) {
+      // generate KEK encryption key
+          const encryptionPayload = this.encryptionKeyService.generateAESKek();
+      
+          if (!encryptionPayload) {
+            throw new InternalServerErrorException('Impossible de créer la clé de chiffrement');
+          }
+
       const newUser = await this.userService.createNewUser(
         {
           email: (userInfoPayload as IUserFromTokenResponse).email,
@@ -131,6 +141,7 @@ export class OauthService {
           type: '0Auth',
           provider: 'GOOGLE',
           accessToken: responsePayload.access_token,
+          encryptedKey: formatEncryptedData(encryptionPayload.IV, encryptionPayload.encrypted as string, encryptionPayload.tag),
           tokenType: 'Bearer',
           expiresAt: responsePayload.expires_in,
           scope: responsePayload.scope,
