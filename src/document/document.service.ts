@@ -54,8 +54,8 @@ export class DocumentService {
         const KekKeyPayload = decomposeEncryptedData(user.encryptedKey!);
 
         const kekKey = this.encryptionKeyService.decryptAESKek(
-            KekKeyPayload.IV,
             KekKeyPayload.encrypted as string,
+            KekKeyPayload.IV,
             KekKeyPayload.tag
         );
 
@@ -168,9 +168,6 @@ export class DocumentService {
                 decomposedDekPayload.IV,
                 decomposedDekPayload.tag
             );
-
-            // Get encrypted metadata
-            const metadata = doc.encryptedMetadata as string;
 
             // Decrypt metadata
             const decomposedEncryptedMetadataPayload = decomposeEncryptedData(doc.encryptedKey!);

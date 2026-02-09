@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from 'src/user/user.module';
@@ -11,7 +11,7 @@ import { EncryptionKeyModule } from 'src/encryption/encryption-key.module';
   providers: [AuthService, SendOtpService],
   controllers: [AuthController],
   imports: [
-    UserModule,
+    forwardRef(() => UserModule),
     MailModule,
     OtpModule,
     EncryptionKeyModule,

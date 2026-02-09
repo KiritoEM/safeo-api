@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Account, User } from 'src/drizzle/schemas';
 import { UserRepository } from './user.repository';
@@ -5,6 +6,7 @@ import {
   CreateUserSchema,
   CreateUserWithAccountSchema,
   UpdateAccountSchema,
+  UserPublic,
 } from './types';
 import { AccountRepository } from 'src/account/account.repository';
 import { AuthTypeEnum } from 'src/core/enums/auth-enums';
@@ -16,8 +18,16 @@ export class UserService {
     private accountRespository: AccountRepository,
   ) { }
 
-  async getUserById(id: string): Promise<User | null> {
-    return await this.userRepository.findUserById(id);
+  async getUserById(userId: string): Promise<UserPublic | null> {
+    const user = await this.userRepository.findUserById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const { encryptedKey, ...userPublic } = user;
+
+    return userPublic ?? null;
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
