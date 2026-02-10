@@ -35,7 +35,6 @@ import {
 } from './dtos/accept-invite-dto';
 import express from 'express';
 import { renderInvitationTemplate } from './templates/invitation_redirection_success';
-import { INVITE_BASE_URL } from './constants';
 import { renderInvitationUnauthorizedTemplate } from './templates/inviration_redirection_unauthorized';
 import { renderInvitationServerErrorTemplate } from './templates/invitation_redirection_error';
 import { RemoveViewerDTO } from './dtos/remove-viewer-dto';

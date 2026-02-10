@@ -224,58 +224,74 @@ export class DocumentService {
         ipAddress?: string,
         filterQuery?: GetDocumentsFilterSchema,
     ): Promise<SharedDocument[]> {
-        // get user for encryptionKey KEK
+        // get user to verify they exist
         const user = await this.userRepository.findUserById(userId);
 
         if (!user) {
             throw new NotFoundException('Utilisateur introuvable');
         }
 
-        // decrypt KEK key
-        const decomposedKekPayload = decomposeEncryptedData(user.encryptedKey!);
+        const sharedDocs = await this.documentRepository.findSharedDocuments(userId, filterQuery);
+        const receivedDocs = await this.documentRepository.findReceivedDocuments(userId, filterQuery);
 
-        const KekKeyPlain = this.encryptionKeyService.decryptAESKek(
+        // Decrypt shared documents (owned by current user)
+        const decomposedKekPayload = decomposeEncryptedData(user.encryptedKey!);
+        const userKekKeyPlain = this.encryptionKeyService.decryptAESKek(
             decomposedKekPayload.encrypted as string,
             decomposedKekPayload.IV,
             decomposedKekPayload.tag,
         );
 
-        if (!KekKeyPlain) {
+        if (!userKekKeyPlain) {
             throw new InternalServerErrorException(
                 'Impossible de récupérer la clé de chiffrement Kek',
             );
         }
 
-        const sharedDocuments = [
-            ...(
-                await this.documentRepository.findSharedDocuments(userId, filterQuery)
-            ).map(
-                async (doc) =>
-                    (await this.decryptDocumentMetadata<Document>(
-                        KekKeyPlain,
-                        doc,
-                    )) as SharedDocument,
-            ),
-        ];
-        const receivedDocuments = [
-            ...(
-                await this.documentRepository.findReceivedDocuments(userId, filterQuery)
-            ).map(
-                async (doc) =>
-                    (await this.decryptDocumentMetadata<Document>(
-                        KekKeyPlain,
-                        doc,
-                    )) as SharedDocument,
-            ),
-        ];
+        const sharedDocuments = await Promise.all(
+            sharedDocs.map(async (doc) =>
+                (await this.decryptDocumentMetadata<Document>(
+                    userKekKeyPlain,
+                    doc,
+                )) as SharedDocument,
+            )
+        );
 
-        // concat sharedDocuments and receivedDocuments
-        const allDocuments = (await Promise.all([
-            ...sharedDocuments,
-            ...receivedDocuments,
-        ])) as SharedDocument[];
+        // Decrypt received documents (need each owner's KEK)
+        const receivedDocuments = await Promise.all(
+            receivedDocs.map(async (doc) => {
+                // Get the document owner's user data
+                const owner = await this.userRepository.findUserById(doc.userId);
 
-        // sort asc by date
+                if (!owner || !owner.encryptedKey) {
+                    throw new InternalServerErrorException(
+                        'Impossible de récupérer les informations du propriétaire',
+                    );
+                }
+
+                // Decrypt owner's KEK
+                const ownerKekPayload = decomposeEncryptedData(owner.encryptedKey);
+                const ownerKekKeyPlain = this.encryptionKeyService.decryptAESKek(
+                    ownerKekPayload.encrypted as string,
+                    ownerKekPayload.IV,
+                    ownerKekPayload.tag,
+                );
+
+                if (!ownerKekKeyPlain) {
+                    throw new InternalServerErrorException(
+                        'Impossible de récupérer la clé de chiffrement du propriétaire',
+                    );
+                }
+
+                return (await this.decryptDocumentMetadata<Document>(
+                    ownerKekKeyPlain,
+                    doc,
+                )) as SharedDocument;
+            })
+        );
+
+        // Combine and sort
+        const allDocuments = [...sharedDocuments, ...receivedDocuments];
         allDocuments.sort((a, b) => {
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
@@ -391,6 +407,14 @@ export class DocumentService {
             KekKeyPlain,
             document,
         );
+
+        // audit log
+        await this.logRepository.log({
+            action: AUDIT_ACTIONS.UPDATE_DOCUMENT_ACTION,
+            target: AUDIT_TARGET.DOCUMENT,
+            userId,
+            ipAddress,
+        });
 
         return decryptedDoc as SharedDocumentWithViewers;
     }
