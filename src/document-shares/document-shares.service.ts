@@ -1,5 +1,5 @@
 import { UserRepository } from 'src/user/user.repository';
-import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
 import { MailService } from 'src/mail/mail.service';
 import { INVITE_BASE_URL } from './constants';
@@ -26,7 +26,7 @@ export class DocumentSharesService {
             throw new NotFoundException('Utilisateur introuvable');
         }
 
-        // generate token link 
+        // generate token link
         const linkJWTPayload = {
             documentId,
             invitedEmail
@@ -61,7 +61,7 @@ export class DocumentSharesService {
     }
 
     // accept invite by token
-    async acceptInvite(userId: string, tokenInvite: string) {
+    async acceptInvite(ownerId: string, ownerEmail: string, tokenInvite: string) {
         // check token validity and expiration
         const tokenInvitePayload = await this.jwtService.verifyToken(tokenInvite) as TokenInvitePayload;
 
@@ -69,8 +69,15 @@ export class DocumentSharesService {
             throw new UnauthorizedException("Impossible de récuperer les informations dans le jeton d'invitation");
         }
 
+        // check if invited email is same as owner email
+        if (ownerEmail.trim() === tokenInvitePayload.invitedEmail.trim()) {
+            throw new ConflictException("Le proprietaire ne pas partager le fichier avec son propre email");
+        }
+
         // get invited user data
         const invitedUser = await this.UserRepository.findUserByEmail(tokenInvitePayload.invitedEmail);
+
+        // check if invited email is same as owner email
 
         if (!invitedUser) {
             throw new NotFoundException("Impossible de trouver l'utilisateur invité avec cet email");
@@ -79,7 +86,7 @@ export class DocumentSharesService {
         // create invite in database
         const inviteData = {
             documentId: tokenInvitePayload.documentId,
-            ownerId: userId,
+            ownerId,
             sharedUserId: invitedUser.id,
             shareToken: tokenInvite,
             expiresAt: new Date(Date.now() + (5 * 24 * 60 * 60 * 1000)) // 5 days

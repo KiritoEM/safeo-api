@@ -14,13 +14,13 @@ import { renderInvitationUnauthorizedTemplate } from './templates/inviration_red
 import { renderInvitationServerErrorTemplate } from './templates/invitation_redirection_error';
 
 @Controller('document-shares')
-@ApiBearerAuth('JWT-auth')
 export class DocumentSharesController {
     private readonly logger = new Logger(DocumentSharesController.name);
 
     constructor(private documentSharesService: DocumentSharesService) { }
 
     @Post('share/:documentId')
+    @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
@@ -50,6 +50,7 @@ export class DocumentSharesController {
 
     @Get('invite')
     @HttpCode(HttpStatus.OK)
+
     @ApiOperation({
         summary: "Accepter une invitation de partage via un token et rediriger vers l'application",
     })
@@ -114,7 +115,7 @@ export class DocumentSharesController {
             throw new UnauthorizedException("Aucun jeton d'invitation");
         }
 
-        await this.documentSharesService.acceptInvite(userReq.id, body.token);
+        await this.documentSharesService.acceptInvite(userReq.id, userReq.email, body.token);
 
         return {
             statusCode: HttpStatus.OK,
