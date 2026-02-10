@@ -170,7 +170,7 @@ export class DocumentService {
             );
 
             // Decrypt metadata
-            const decomposedEncryptedMetadataPayload = decomposeEncryptedData(doc.encryptedKey!);
+            const decomposedEncryptedMetadataPayload = decomposeEncryptedData(doc.encryptedMetadata!);
 
             const decryptedMetadata = aes256GcmDecrypt({
                 encrypted: decomposedEncryptedMetadataPayload.encrypted,
