@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -37,6 +38,7 @@ import { renderInvitationTemplate } from './templates/invitation_redirection_suc
 import { INVITE_BASE_URL } from './constants';
 import { renderInvitationUnauthorizedTemplate } from './templates/inviration_redirection_unauthorized';
 import { renderInvitationServerErrorTemplate } from './templates/invitation_redirection_error';
+import { RemoveViewerDTO } from './dtos/remove-viewer-dto';
 
 @Controller('document-shares')
 export class DocumentSharesController {
@@ -101,9 +103,9 @@ export class DocumentSharesController {
         return res.send(renderInvitationUnauthorizedTemplate());
       }
 
-      const appLink = `${INVITE_BASE_URL}?token=${query.token}`;
+      const deepLink = `safeo://invite?token=${query.token}`;
 
-      return res.send(renderInvitationTemplate(appLink));
+      return res.send(renderInvitationTemplate(deepLink));
     } catch (err) {
       if (
         err instanceof UnauthorizedException ||
@@ -157,6 +159,34 @@ export class DocumentSharesController {
     return {
       statusCode: HttpStatus.OK,
       message: 'Invitation acceptée avec succès',
+    };
+  }
+
+  @Delete(':documentId/remove-viewer')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'Supprimer un lecteur du document',
+  })
+  @ApiBody({ type: RemoveViewerDTO })
+  @ApiUnauthorizedResponse({
+    description: 'Accès refusé (seul le propriétaire peut supprimer)',
+  })
+  async removeViewer(
+    @UserReq() user: types.UserPayload,
+    @Param('documentId') documentId: string,
+    @Body() body: RemoveViewerDTO,
+  ) {
+    await this.documentSharesService.deleteInvite(
+      user.id,
+      documentId,
+      body.userIdToRemove!
+    );
+
+    return {
+      statusCode: HttpStatus.NO_CONTENT,
+      message: 'Lecteur supprimé avec succès',
     };
   }
 }

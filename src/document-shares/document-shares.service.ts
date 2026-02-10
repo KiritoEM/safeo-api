@@ -114,4 +114,9 @@ export class DocumentSharesService {
 
     await this.documentSharesRepository.create(inviteData);
   }
+
+  // delete an invite
+  async deleteInvite(userId: string, documentId: string, userIdToRemoved: string) {
+    await this.documentSharesRepository.delete(userId, userIdToRemoved, documentId);
+  }
 }

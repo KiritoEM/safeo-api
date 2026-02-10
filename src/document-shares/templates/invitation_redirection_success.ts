@@ -1,4 +1,5 @@
-export const renderInvitationTemplate = (appLink: string): string => `
+export const renderInvitationTemplate = (deepLink: string): string =>
+  `
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,19 +14,15 @@ export const renderInvitationTemplate = (appLink: string): string => `
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #f5f5f5;
     }
     .container {
       text-align: center;
-      padding: 40px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      max-width: 400px;
+      padding: 20px;
     }
     .icon {
       font-size: 48px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .spinner {
       border: 3px solid #f3f3f3;
@@ -34,7 +31,7 @@ export const renderInvitationTemplate = (appLink: string): string => `
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
+      margin: 0 auto 20px;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -42,7 +39,7 @@ export const renderInvitationTemplate = (appLink: string): string => `
     }
     h2 {
       color: #333;
-      margin: 0 0 10px 0;
+      margin-bottom: 8px;
     }
     p {
       color: #666;
@@ -57,15 +54,21 @@ export const renderInvitationTemplate = (appLink: string): string => `
     <div class="spinner"></div>
     <p>Redirection vers l'application...</p>
   </div>
-  <script>    
-    window.location.href = ${appLink};
-    
+
+  <script>
+    window.location.href = "${deepLink}";
+
     setTimeout(function() {
       window.close();
     }, 1000);
-    
+
     setTimeout(function() {
-      document.body.innerHTML = '<div style="text-align:center;padding:40px;background:white;border-radius:16px;max-width:400px;margin:auto;"><div style="font-size:48px;margin-bottom:20px;">✅</div><h2 style="color:#333;margin-bottom:10px;">Invitation reçue</h2><p style="color:#666;margin-bottom:20px;">Vous pouvez fermer cette fenêtre et retourner à l\'application.</p><button onclick="window.close()" style="background:#667eea;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;">Fermer</button></div>';
+      document.body.innerHTML =
+        '<div style="text-align:center;padding:40px;">' +
+        '<div style="font-size:48px;margin-bottom:16px;">✅</div>' +
+        '<h2>Invitation reçue</h2>' +
+        '<p>Vous pouvez fermer cette fenêtre.</p>' +
+        '</div>';
     }, 3000);
   </script>
 </body>
