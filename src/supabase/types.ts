@@ -8,7 +8,7 @@ export type uploadFileSchema = {
 };
 
 // Responses schemas
-export type uploadFileResponse = {
+export type UploadFileResponse = {
   path: string;
   fullPath: string;
 };
