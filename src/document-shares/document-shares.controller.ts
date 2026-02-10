@@ -42,7 +42,7 @@ import { renderInvitationServerErrorTemplate } from './templates/invitation_redi
 export class DocumentSharesController {
   private readonly logger = new Logger(DocumentSharesController.name);
 
-  constructor(private documentSharesService: DocumentSharesService) {}
+  constructor(private documentSharesService: DocumentSharesService) { }
 
   @Post('share/:documentId')
   @ApiBearerAuth('JWT-auth')
@@ -57,7 +57,7 @@ export class DocumentSharesController {
     type: ShareLinkResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Utilisateur introuvable',
+    description: "Utilisateur introuvable ou email invité n'est pas lié a un compte",
   })
   async shareFile(
     @UserReq() userReq: types.UserPayload,
