@@ -85,6 +85,13 @@
       "when": 1770624252284,
       "tag": "0011_cute_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770680821499,
+      "tag": "0012_bitter_ogun",
+      "breakpoints": true
     }
   ]
 }

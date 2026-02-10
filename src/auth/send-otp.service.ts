@@ -10,7 +10,7 @@ import { SendLoginEmailParams, SendSignupEmailParams } from './types';
 export class SendOtpService {
   private readonly logger = new Logger(SendOtpService.name);
 
-  constructor(private mailService: MailService) {}
+  constructor(private mailService: MailService) { }
 
   // send login email utility
   async sendLoginEmail(data: SendLoginEmailParams) {
@@ -27,7 +27,7 @@ export class SendOtpService {
     } catch (err) {
       this.logger.error('Failed to send OTP to user: ', err);
       throw new InternalServerErrorException(
-        "Impossible d'envoyer le code de vérification à votre adresse email.",
+        "Impossible d'envoyer le code de vérification à votre adresse email",
       );
     }
   }
@@ -51,7 +51,7 @@ export class SendOtpService {
     } catch (err) {
       this.logger.error('Failed to send OTP to user: ', err);
       throw new InternalServerErrorException(
-        "Impossible d'envoyer le code de vérification à votre adresse email.",
+        "Impossible d'envoyer le code de vérification à votre adresse email",
       );
     }
   }
