@@ -22,7 +22,7 @@ export class DocumentSharesService {
     private mailService: MailService,
     private UserRepository: UserRepository,
     private documentSharesRepository: DocumentSharesRepository,
-  ) {}
+  ) { }
 
   //share email link
   async shareEmailLink(
@@ -37,9 +37,22 @@ export class DocumentSharesService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
+    // get invited user data
+    const invitedUser = await this.UserRepository.findUserByEmail(
+      invitedEmail,
+    );
+
+    // check if invited email is same as owner email
+    if (!invitedUser) {
+      throw new NotFoundException(
+        "Impossible de trouver l'utilisateur invité avec cet email",
+      );
+    }
+
     // generate token link
     const linkJWTPayload = {
       documentId,
+      invitedUserId: invitedUser.id,
       invitedEmail,
     } as TokenInvitePayload;
 
@@ -90,24 +103,11 @@ export class DocumentSharesService {
       );
     }
 
-    // get invited user data
-    const invitedUser = await this.UserRepository.findUserByEmail(
-      tokenInvitePayload.invitedEmail,
-    );
-
-    // check if invited email is same as owner email
-
-    if (!invitedUser) {
-      throw new NotFoundException(
-        "Impossible de trouver l'utilisateur invité avec cet email",
-      );
-    }
-
     // create invite in database
     const inviteData = {
       documentId: tokenInvitePayload.documentId,
       ownerId,
-      sharedUserId: invitedUser.id,
+      sharedUserId: tokenInvitePayload.invitedUserId,
       shareToken: tokenInvite,
       expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
     } as CreateDocumentShareSchema;

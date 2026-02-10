@@ -11,4 +11,5 @@ export type CreateDocumentShareSchema = {
 export type TokenInvitePayload = {
   documentId: string;
   invitedEmail: string;
+  invitedUserId: string;
 };
