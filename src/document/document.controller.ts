@@ -53,6 +53,7 @@ import {
     IUpdateDocumentPublic,
     IGetSharedDocumentsPublic,
     IDownloadDocument,
+    IGetDocumentPublic,
 } from './types';
 import {
     UploadDocumentDTO,
@@ -63,6 +64,7 @@ import {
     GetSharedDocumentsResponseDTO,
 } from './dtos/get-shared-document.dto';
 import { DownloadDocumentResponseDTO } from './dtos/download-document.dto';
+import { GetDocumentResponseDTO } from './dtos/get-document-dto';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
@@ -169,6 +171,42 @@ export class DocumentController {
         };
     }
 
+    @Get(':documentId')
+    @HttpCode(HttpStatus.OK)
+    @ApiParam({
+        name: 'documentId',
+        description: 'Id du document à récupérer',
+        required: true,
+        type: String,
+    })
+    @ApiOperation({
+        summary: 'Récupérer un document par ID',
+    })
+    @ApiOkResponse({
+        description: 'Document récupéré avec succès',
+        type: GetDocumentResponseDTO,
+    })
+    @ApiNotFoundResponse({
+        description: 'Utilisateur introuvable ou document introuvable/accès refusé',
+    })
+    async getDocument(
+        @Param('documentId') documentId: string,
+        @UserReq() user: types.UserPayload,
+        @Ip() Ip,
+    ): Promise<IGetDocumentPublic> {  
+        const document = await this.documentService.getDocumentsWithViewers(
+            user.id,
+            documentId,
+            Ip,
+        );
+
+        return {
+            statusCode: HttpStatus.OK,
+            document,
+            message: 'Document récupéré avec succès',
+        };
+    }
+
     @Throttle({ short: { limit: 20, ttl: 6000 } }) // 20/minute
     @Patch(':documentId')
     @HttpCode(HttpStatus.OK)
@@ -232,12 +270,10 @@ export class DocumentController {
     async downloadDocument(
         @Param('documentId') documentId: string,
         @UserReq() user: types.UserPayload,
-        @Ip() Ip,
     ): Promise<IDownloadDocument> {
         const downloadMetadata = await this.documentService.downloadDocument(
             user.id,
             documentId,
-            Ip,
         );
 
         return {

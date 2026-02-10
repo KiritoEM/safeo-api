@@ -29,7 +29,7 @@ export type UpdateDocumentSchema = Partial<{
   originalName: string;
 }>;
 
-export type DecryptedDocument<T extends DocumentPublic | SharedDocument> = Omit<
+export type DecryptedDocument<T extends DocumentPublic | SharedDocument | SharedDocumentWithViewers> = Omit<
   T,
   'encryptedKey' | 'fileName' | 'encryptedMetadata'
 > & {
@@ -57,6 +57,10 @@ export interface IDownloadDocument extends BaseApiReturn {
   fileName: string;
 }
 
+export interface IGetDocumentPublic extends BaseApiReturn {
+  document: SharedDocumentWithViewers;
+}
+
 export type DownloadFileSchema = {
   downloadUrl: string;
   originalName: string;
@@ -80,3 +84,12 @@ export type SharedDocument = Omit<
   ownerUser: UserPublic;
   publicUrl?: string;
 };
+
+export type SharedDocumentWithViewers = Omit<
+  Document,
+  'encryptedKey' | 'fileName' | 'encryptedMetadata'
+> & {
+  sharedWith: UserPublic[];
+  publicUrl?: string;
+};
+

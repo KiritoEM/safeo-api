@@ -30,7 +30,7 @@ export class DocumentRepository {
   constructor(
     @Inject('DrizzleAsyncProvider')
     private readonly db: drizzleProvider.DrizzleDB,
-  ) {}
+  ) { }
 
   async create(data: CreateDocumentSchema): Promise<Document[]> {
     return await this.db.insert(documents).values(data).returning();
@@ -38,8 +38,40 @@ export class DocumentRepository {
 
   async findById(id: string) {
     return await this.db.query.documents.findFirst({
-      where: eq(users.id, id)
+      where: eq(documents.id, id)
     })
+  }
+
+  async findByIdWithViewers(id: string) {
+    const document = await this.db.query.documents.findFirst({
+      where: eq(documents.id, id)
+    });
+
+    if (!document) {
+      return null;
+    }
+
+
+    // get all viewers users
+    const sharedWith = await this.db
+      .select(
+        {
+          ...userColumnsPublic
+        }
+      )
+      .from(documentShares)
+      .innerJoin(users, eq(users.id, documentShares.sharedUserId))
+      .where(
+        and(
+          eq(documentShares.documentId, id),
+          not(eq(documentShares.isExpired, true))
+        )
+      )
+
+    return {
+      ...document,
+      sharedWith
+    }
   }
 
   async findAll(userId: string, filterQuery?: GetDocumentsFilterSchema) {

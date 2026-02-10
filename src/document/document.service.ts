@@ -28,6 +28,7 @@ import {
     DownloadFileSchema,
     GetDocumentsFilterSchema,
     SharedDocument,
+    SharedDocumentWithViewers,
     UpdateDocumentSchema,
 } from './types';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
@@ -350,6 +351,50 @@ export class DocumentService {
         return { ...filteredDocument, publicUrl: cachedPublicUrl.publicUrl };
     }
 
+    // get document by id with its viewers
+    async getDocumentsWithViewers(userId: string, documentId: string, ipAddress?: string): Promise<SharedDocumentWithViewers> {
+        const document = await this.documentRepository.findByIdWithViewers(documentId);
+
+        if (!document) {
+            throw new NotFoundException('Document introuvable');
+        }
+
+        // check if user is the document owner
+        if (document.userId !== userId) {
+            throw new NotFoundException('Vous n\'êtes pas autorisé à voir ces informations');
+        }
+
+        // get user for encryptionKey KEK
+        const user = await this.userRepository.findUserById(userId);
+
+        if (!user) {
+            throw new NotFoundException('Utilisateur introuvable');
+        }
+
+        // decrypt KEK key
+        const decomposedKekPayload = decomposeEncryptedData(user.encryptedKey!);
+
+        const KekKeyPlain = this.encryptionKeyService.decryptAESKek(
+            decomposedKekPayload.encrypted as string,
+            decomposedKekPayload.IV,
+            decomposedKekPayload.tag,
+        );
+
+        if (!KekKeyPlain) {
+            throw new InternalServerErrorException(
+                'Impossible de récupérer la clé de chiffrement Kek',
+            );
+        }
+
+        // decrypt document metadata to get bucketPath
+        const decryptedDoc = await this.decryptDocumentMetadata<Document>(
+            KekKeyPlain,
+            document,
+        );
+
+        return decryptedDoc as SharedDocumentWithViewers;
+    }
+
     // update document metadata
     async updateDocumentMetadata(
         userId: string,
@@ -375,7 +420,7 @@ export class DocumentService {
     }
 
     // download a document
-    async downloadDocument(userId: string, documentId: string, ipAddress?: string): Promise<DownloadFileSchema> {
+    async downloadDocument(userId: string, documentId: string): Promise<DownloadFileSchema> {
         // get user for encryptionKey KEK
         const user = await this.userRepository.findUserById(userId);
 
