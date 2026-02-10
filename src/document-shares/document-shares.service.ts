@@ -12,6 +12,7 @@ import { MailService } from 'src/mail/mail.service';
 import { INVITE_BASE_URL } from './constants';
 import { DocumentSharesRepository } from './document-shares.repository';
 import { CreateDocumentShareSchema, TokenInvitePayload } from './types';
+import { DocumentRepository } from 'src/document/document.repository';
 
 @Injectable()
 export class DocumentSharesService {
@@ -22,6 +23,7 @@ export class DocumentSharesService {
     private mailService: MailService,
     private UserRepository: UserRepository,
     private documentSharesRepository: DocumentSharesRepository,
+    private documentRepository: DocumentRepository,
   ) { }
 
   //share email link
@@ -30,26 +32,28 @@ export class DocumentSharesService {
     documentId: string,
     invitedEmail: string,
   ) {
-    // get user data
     const user = await this.UserRepository.findUserById(userId);
 
     if (!user) {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    // get invited user data
     const invitedUser = await this.UserRepository.findUserByEmail(
       invitedEmail,
     );
 
-    // check if invited email is same as owner email
     if (!invitedUser) {
       throw new NotFoundException(
         "Impossible de trouver l'utilisateur invité avec cet email",
       );
     }
 
-    // generate token link
+    if (user.email.trim() === invitedEmail.trim()) {
+      throw new ConflictException(
+        'Le proprietaire ne peut pas partager le fichier avec son propre email',
+      );
+    }
+
     const linkJWTPayload = {
       documentId,
       invitedUserId: invitedUser.id,
@@ -64,10 +68,9 @@ export class DocumentSharesService {
 
     this.logger.log(appLink);
 
-    // send link to invited email
     try {
       await this.mailService.sendEmail({
-        subject: `${user.fullName} vous a invité à voir un document`,
+        subject: `${user.fullName} vous a invité à voir un document`,
         to: invitedEmail,
         template: 'send-invitation',
         context: {
@@ -84,8 +87,7 @@ export class DocumentSharesService {
   }
 
   // accept invite by token
-  async acceptInvite(ownerId: string, ownerEmail: string, tokenInvite: string) {
-    // check token validity and expiration
+  async acceptInvite(currentUserId: string, currentUserEmail: string, tokenInvite: string) {
     const tokenInvitePayload = (await this.jwtService.verifyToken(
       tokenInvite,
     )) as TokenInvitePayload;
@@ -96,20 +98,32 @@ export class DocumentSharesService {
       );
     }
 
-    // check if invited email is same as owner email
-    if (ownerEmail.trim() === tokenInvitePayload.invitedEmail.trim()) {
-      throw new ConflictException(
-        'Le proprietaire ne pas partager le fichier avec son propre email',
+    if (currentUserEmail.trim() !== tokenInvitePayload.invitedEmail.trim()) {
+      throw new UnauthorizedException(
+        "Cette invitation n'est pas destinée à votre compte",
       );
     }
 
-    // create invite in database
+    const document = await this.documentRepository.findById(
+      tokenInvitePayload.documentId
+    );
+
+    if (!document) {
+      throw new NotFoundException('Document introuvable');
+    }
+
+    if (document.userId === currentUserId) {
+      throw new ConflictException(
+        'Vous êtes déjà propriétaire de ce document',
+      );
+    }
+
     const inviteData = {
       documentId: tokenInvitePayload.documentId,
-      ownerId,
-      sharedUserId: tokenInvitePayload.invitedUserId,
+      ownerId: document.userId,
+      sharedUserId: currentUserId,
       shareToken: tokenInvite,
-      expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
+      expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
     } as CreateDocumentShareSchema;
 
     await this.documentSharesRepository.create(inviteData);
