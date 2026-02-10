@@ -5,14 +5,21 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import morgan from 'morgan';
 import { AllExceptionsFilter } from './core/configs/allexceptions.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as express from "express";
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.use('/.well-known', express.static(join(__dirname, '..', 'public', '.well-known')));
 
   app.enableVersioning({
     type: VersioningType.URI,
   });
 
-  app.setGlobalPrefix('v1/api');
+  app.setGlobalPrefix('v1/api', {
+    exclude: ['.well-known/*']
+  });
 
   app.useGlobalFilters(new AllExceptionsFilter());
 

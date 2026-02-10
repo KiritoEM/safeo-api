@@ -5,14 +5,15 @@ import { UserRepository } from './user.repository';
 import { AccountModule } from 'src/account/account.module';
 import { UserController } from './user.controller';
 import { AuthModule } from 'src/auth/auth.module';
-import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
+import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
 
 @Module({
-  providers: [UserService, UserRepository, JwtUtilsService],
+  providers: [UserService, UserRepository],
   imports: [
     DrizzleModule,
     AccountModule,
-    AuthModule
+    AuthModule,
+    JwtUtilsModule
   ],
   exports: [UserService, UserRepository],
   controllers: [UserController],

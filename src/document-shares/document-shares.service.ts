@@ -1,8 +1,10 @@
 import { UserRepository } from 'src/user/user.repository';
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
 import { MailService } from 'src/mail/mail.service';
 import { INVITE_BASE_URL } from './constants';
+import { DocumentSharesRepository } from './document-shares.repository';
+import { CreateDocumentShareSchema, TokenInvitePayload } from './types';
 
 @Injectable()
 export class DocumentSharesService {
@@ -11,7 +13,8 @@ export class DocumentSharesService {
     constructor(
         private jwtService: JwtUtilsService,
         private mailService: MailService,
-        private UserRepository: UserRepository
+        private UserRepository: UserRepository,
+        private documentSharesRepository: DocumentSharesRepository
     ) { }
 
     //share email link
@@ -27,13 +30,13 @@ export class DocumentSharesService {
         const linkJWTPayload = {
             documentId,
             invitedEmail
-        };
+        } as TokenInvitePayload;
 
-        const tokenLink = await this.jwtService.createJWT(linkJWTPayload, {
+        const tokenInvite = await this.jwtService.createJWT(linkJWTPayload, {
             expiresIn: '5d'
         });
 
-        const inviteLink = `${INVITE_BASE_URL}?token=${tokenLink}`;
+        const appLink = `${INVITE_BASE_URL}?token=${tokenInvite}`;
 
         // send link to invited email
         try {
@@ -43,7 +46,7 @@ export class DocumentSharesService {
                 template: 'send-invitation',
                 context: {
                     inviterName: user.fullName,
-                    inviteLink
+                    appLink
                 }
                 ,
             });
@@ -53,5 +56,33 @@ export class DocumentSharesService {
                 "Impossible d'envoyer le lien d'invitation",
             );
         }
+    }
+
+    // accept invite by token
+    async acceptInvite(userId: string, tokenInvite: string) {
+        // check token validity and expiration
+        const tokenInvitePayload = await this.jwtService.verifyToken(tokenInvite) as TokenInvitePayload;
+
+        if (!tokenInvitePayload) {
+            throw new UnauthorizedException("Impossible de récuperer les informations dans le jeton d'invitation");
+        }
+
+        // get invited user data
+        const invitedUser = await this.UserRepository.findUserByEmail(tokenInvitePayload.invitedEmail);
+
+        if (!invitedUser) {
+            throw new NotFoundException("Impossible de trouver l'utilisateur invité avec cet email");
+        }
+
+        // create invite in database
+        const inviteData = {
+            documentId: tokenInvitePayload.documentId,
+            ownerId: userId,
+            sharedUserId: invitedUser.id,
+            shareToken: tokenInvite,
+            expiresAt: new Date(Date.now() + (5 * 24 * 60 * 60 * 1000)) // 5 days
+        } as CreateDocumentShareSchema;
+
+        await this.documentSharesRepository.create(inviteData);
     }
 }

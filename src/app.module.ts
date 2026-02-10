@@ -14,7 +14,6 @@ import jwtConfig, { jwtOptions } from './core/configs/jwt.config';
 import { OtpModule } from './otp/otp.module';
 import { AccountModule } from './account/account.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
-import { EncryptionKeyService } from './encryption/encryption-key.service';
 import { EncryptionKeyModule } from './encryption/encryption-key.module';
 import { DocumentModule } from './document/document.module';
 import { SupabaseModule } from './supabase/supabase.module';
@@ -22,8 +21,6 @@ import mailConfig from './core/configs/mail.config';
 import encryptionConfig from './core/configs/encryption.config';
 import supabaseConfig from './core/configs/supabase.config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { DocumentSharesController } from './document-shares/document-shares.controller';
-import { DocumentSharesService } from './document-shares/document-shares.service';
 import { DocumentSharesModule } from './document-shares/document-shares.module';
 import { JwtUtilsModule } from './jwt-utils/jwt-utils.module';
 
@@ -73,8 +70,6 @@ import { JwtUtilsModule } from './jwt-utils/jwt-utils.module';
     SupabaseModule,
     DocumentSharesModule,
     JwtUtilsModule,
-  ],
-  providers: [EncryptionKeyService, DocumentSharesService],
-  controllers: [DocumentSharesController],
+  ]
 })
 export class AppModule { }

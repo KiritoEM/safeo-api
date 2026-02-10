@@ -7,7 +7,7 @@ import { timestamp } from 'drizzle-orm/pg-core';
 export const documentShares = pgTable('document_shares', {
   id: uuid('id').defaultRandom().primaryKey(),
   expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
-  isExpired: boolean('is_expired').default(true),
+  isExpired: boolean('is_expired').default(false),
   shareToken: text('share_token').notNull().unique(),
   ownerId: uuid('owner_id')
     .notNull()
@@ -20,3 +20,7 @@ export const documentShares = pgTable('document_shares', {
     .references(() => users.id),
   ...timestamps,
 });
+
+
+// type
+export type DocumentShares = typeof documentShares.$inferSelect;
