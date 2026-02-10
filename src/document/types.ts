@@ -52,6 +52,18 @@ export interface IGetSharedDocumentsPublic extends BaseApiReturn {
   documents: SharedDocument[];
 }
 
+export interface IDownloadDocument extends BaseApiReturn {
+  downloadUrl: string;
+  fileName: string;
+}
+
+export type DownloadFileSchema = {
+  downloadUrl: string;
+  originalName: string;
+  fileMimeType: string;
+  fileSize: number
+}
+
 export type DocumentPublic = Omit<
   Document,
   'encryptedKey' | 'fileName' | 'encryptedMetadata'

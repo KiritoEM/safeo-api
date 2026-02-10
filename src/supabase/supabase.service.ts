@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { uploadFileResponse, uploadFileSchema } from './types';
+import { UploadFileResponse, uploadFileSchema } from './types';
 
 @Injectable()
 export class SupabaseService {
@@ -9,10 +9,10 @@ export class SupabaseService {
 
   constructor(
     @Inject('Supabase_client') private readonly supabase: SupabaseClient,
-  ) {}
+  ) { }
 
   // upload file to supabase storage
-  async uploadFile(data: uploadFileSchema): Promise<uploadFileResponse> {
+  async uploadFile(data: uploadFileSchema): Promise<UploadFileResponse> {
     const fileName = `${Date.now()}-${data.originalFileName}`;
 
     const bucket =
@@ -23,7 +23,7 @@ export class SupabaseService {
     const { data: resultData, error } = await this.supabase.storage
       .from(bucket)
       .upload(fileName, data.file, {
-        contentType: 'application/octet-stream',
+        contentType: data.fileMimetype,
         upsert: false,
         cacheControl: '3600',
       });
@@ -43,7 +43,7 @@ export class SupabaseService {
     return 'DOCUMENT';
   }
 
-  // TODO: create signed URL for file access
+  // create signed URL for file access
   async createSignedURL(
     fileMimeType: string,
     bucketPath: string,
@@ -61,5 +61,21 @@ export class SupabaseService {
     if (error) throw new BadRequestException(error.message);
 
     return data.signedUrl;
+  }
+
+  // download image from the private bucket
+  async downloadFile(fileMimeType: string, bucketPath: string,): Promise<Blob> {
+    const bucket =
+      this.getFileType(fileMimeType) === 'DOCUMENT'
+        ? this.documentBucket
+        : this.imageBucket;
+
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .download(bucketPath);
+
+    if (error) throw new BadRequestException(error.message);
+
+    return data;
   }
 }

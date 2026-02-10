@@ -25,6 +25,7 @@ import {
     CreateDocumentSchema,
     DecryptedDocument,
     DocumentPublic,
+    DownloadFileSchema,
     GetDocumentsFilterSchema,
     SharedDocument,
     UpdateDocumentSchema,
@@ -371,6 +372,53 @@ export class DocumentService {
         });
 
         return updatedDocument[0];
+    }
+
+    // download a document
+    async downloadDocument(userId: string, documentId: string, ipAddress?: string): Promise<DownloadFileSchema> {
+        // get user for encryptionKey KEK
+        const user = await this.userRepository.findUserById(userId);
+
+        if (!user) {
+            throw new NotFoundException('Utilisateur introuvable');
+        }
+
+        // decrypt KEK key
+        const decomposedKekPayload = decomposeEncryptedData(user.encryptedKey!);
+
+        const KekKeyPlain = this.encryptionKeyService.decryptAESKek(
+            decomposedKekPayload.encrypted as string,
+            decomposedKekPayload.IV,
+            decomposedKekPayload.tag,
+        );
+
+        if (!KekKeyPlain) {
+            throw new InternalServerErrorException(
+                'Impossible de récupérer la clé de chiffrement Kek',
+            );
+        }
+
+        //get document
+        const document = await this.documentRepository.findById(documentId);
+
+        if (!document) {
+            throw new NotFoundException('Document introuvable');
+        }
+
+        // decrypt document metadata to get bucketPath
+        const decryptedDoc = await this.decryptDocumentMetadata<Document>(
+            KekKeyPlain,
+            document,
+        );
+
+        // download file from the cloud
+        return {
+            downloadUrl: decryptedDoc.publicUrl,
+            originalName: document.originalName,
+            fileMimeType: document.fileMimeType,
+            fileSize: document.fileSize,
+
+        }
     }
 
     // soft delete document

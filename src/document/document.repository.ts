@@ -36,6 +36,12 @@ export class DocumentRepository {
     return await this.db.insert(documents).values(data).returning();
   }
 
+  async findById(id: string) {
+    return await this.db.query.documents.findFirst({
+      where: eq(users.id, id)
+    })
+  }
+
   async findAll(userId: string, filterQuery?: GetDocumentsFilterSchema) {
     const conditions = [
       eq(documents.userId, userId),
