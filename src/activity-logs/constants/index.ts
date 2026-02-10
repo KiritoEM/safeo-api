@@ -9,6 +9,7 @@ export enum AUDIT_ACTIONS {
   REFRESH_ACCESS_TOKEN_ACTION = 'refresh_access_token',
   CREATE_DOCUMENT_ACTION = 'create_new_document',
   GET_ALL_USER_DOCUMENT = 'get_all_user_documents',
+  GET_USER_SHARED_DOCUMENT = 'get_user_shared_documents',
   UPDATE_DOCUMENT_ACTION = 'update_document',
   SOFT_DELETE_DOCUMENT_ACTION = 'soft_delete_document',
   GET_USER_INFO = 'get_specific_user_info',
