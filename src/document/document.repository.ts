@@ -4,7 +4,6 @@ import {
   eq,
   getTableColumns,
   not,
-  or,
   sql,
   SQLWrapper,
 } from 'drizzle-orm';
@@ -116,7 +115,7 @@ export class DocumentRepository {
     filterQuery?: GetDocumentsFilterSchema,
   ) {
     const conditions = [
-      or(
+      and(
         eq(documentShares.ownerId, id),
         not(eq(documents.isDeleted, true)),
         not(eq(documentShares.isExpired, true)),
@@ -160,7 +159,7 @@ export class DocumentRepository {
     filterQuery?: GetDocumentsFilterSchema,
   ) {
     const conditions = [
-      or(
+      and(
         eq(documentShares.sharedUserId, id),
         not(eq(documents.isDeleted, true)),
         not(eq(documentShares.isExpired, true)),
