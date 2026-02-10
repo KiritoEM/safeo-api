@@ -10,10 +10,11 @@ import { UserRepository } from 'src/user/user.repository';
 import { DocumentRepository } from './document.repository';
 import { UserStorageStatusEnum } from 'src/user/enums';
 import { getFileType } from 'src/core/utils/file-utils';
-import { CreateDocumentSchema, DocumentPublic, GetDocumentsFilterSchema, UpdateDocumentSchema } from './types';
+import { CreateDocumentSchema, DecryptedDocument, DocumentPublic, GetDocumentsFilterSchema, SharedDocument, UpdateDocumentSchema } from './types';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { MulterFile } from 'src/types/multer';
+import { Document } from 'src/drizzle/schemas';
 
 @Injectable()
 export class DocumentService {
@@ -155,61 +156,10 @@ export class DocumentService {
             throw new InternalServerErrorException('Impossible de récupérer la clé de chiffrement Kek');
         }
 
-        const allDocuments = await this.documentRepository.fetchAll(userId, filterQuery);
+        const allDocuments = await this.documentRepository.findAll(userId, filterQuery);
 
         // attach publicURL to document
-        const documentsWithPublicUrl = allDocuments.map(async (doc) => {
-            // decrypt DEK key
-            const decomposedDekPayload = decomposeEncryptedData(doc.encryptedKey!);
-
-            const DekKey = this.encryptionKeyService.decryptAESDEK(
-                decomposedDekPayload.encrypted as string,
-                KekKeyPlain,
-                decomposedDekPayload.IV,
-                decomposedDekPayload.tag
-            );
-
-            // Decrypt metadata
-            const decomposedEncryptedMetadataPayload = decomposeEncryptedData(doc.encryptedMetadata!);
-
-            const decryptedMetadata = aes256GcmDecrypt({
-                encrypted: decomposedEncryptedMetadataPayload.encrypted,
-                IV: decomposedEncryptedMetadataPayload.IV,
-                tag: decomposedEncryptedMetadataPayload.tag,
-                key: DekKey as string
-            });
-
-            const { bucketPath } = JSON.parse(decryptedMetadata) as Record<string, string>;
-
-            const {
-                encryptedKey,
-                encryptedMetadata,
-                fileName,
-                ...filteredDocument
-            } = doc;
-
-            // check if publicURL is cached
-            const cachedPublicUrl = await this.cache.get('document:url:' + doc.id) as { publicUrl: string };
-
-            if (!cachedPublicUrl) {
-                const publicUrl = await this.storageService.createSignedURL(
-                    doc.fileMimeType as string,
-                    bucketPath,
-                    60 * 60 * 24
-                );
-
-                // cache publicURL 
-                await this.cache.set(
-                    'document:url:' + doc.id,
-                    { publicUrl },
-                    60 * 60 * 24
-                );
-
-                return { ...filteredDocument, publicUrl } as DocumentPublic;
-            }
-
-            return { ...filteredDocument, publicUrl: cachedPublicUrl.publicUrl } as DocumentPublic;
-        });
+        const documentsWithPublicUrl = allDocuments.map(async (doc) => (await this.decryptDocumentFile<Document>(KekKeyPlain, doc)) as DocumentPublic);
 
         // audit log
         await this.logRepository.log({
@@ -220,6 +170,104 @@ export class DocumentService {
         });
 
         return await Promise.all(documentsWithPublicUrl);
+    }
+
+    // get shared documents of an user
+    async getSharedDocuments(
+        userId: string,
+        ipAddress?: string,
+        filterQuery?: GetDocumentsFilterSchema
+    ): Promise<SharedDocument[]> {
+        // get user for encryptionKey KEK
+        const user = await this.userRepository.findUserById(userId);
+
+        if (!user) {
+            throw new NotFoundException('Utilisateur introuvable');
+        }
+
+        // decrypt KEK key
+        const decomposedKekPayload = decomposeEncryptedData(user.encryptedKey!);
+
+        const KekKeyPlain = this.encryptionKeyService.decryptAESKek(
+            decomposedKekPayload.encrypted as string,
+            decomposedKekPayload.IV,
+            decomposedKekPayload.tag
+        );
+
+        if (!KekKeyPlain) {
+            throw new InternalServerErrorException('Impossible de récupérer la clé de chiffrement Kek');
+        }
+
+        const sharedDocuments = [
+            ...(await this.documentRepository.findSharedDocuments(userId, filterQuery)).map(async (doc) => (await this.decryptDocumentFile<Document>(KekKeyPlain, doc)) as SharedDocument)
+        ];
+        const receivedDocuments = [
+            ...(await this.documentRepository.findReceivedDocuments(userId, filterQuery)).map(async (doc) => (await this.decryptDocumentFile<Document>(KekKeyPlain, doc)) as SharedDocument)
+        ];
+
+        // concat sharedDocuments and receivedDocuments
+        const allDocuments = await Promise.all([...sharedDocuments, ...receivedDocuments]) as SharedDocument[];
+
+        // sort asc by date
+        allDocuments.sort((a, b) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        });
+
+        return allDocuments;
+    }
+
+    // decrypt image URL of a document and attach it to th document object
+    async decryptDocumentFile<T extends Document>(KekKeyPlain: string, doc: T): Promise<DecryptedDocument<T>> {
+        // decrypt DEK key
+        const decomposedDekPayload = decomposeEncryptedData(doc.encryptedKey);
+
+        const DekKey = this.encryptionKeyService.decryptAESDEK(
+            decomposedDekPayload.encrypted as string,
+            KekKeyPlain,
+            decomposedDekPayload.IV,
+            decomposedDekPayload.tag
+        );
+
+        // Decrypt metadata
+        const decomposedEncryptedMetadataPayload = decomposeEncryptedData(doc.encryptedMetadata);
+
+        const decryptedMetadata = aes256GcmDecrypt({
+            encrypted: decomposedEncryptedMetadataPayload.encrypted,
+            IV: decomposedEncryptedMetadataPayload.IV,
+            tag: decomposedEncryptedMetadataPayload.tag,
+            key: DekKey as string
+        });
+
+        const { bucketPath } = JSON.parse(decryptedMetadata) as Record<string, string>;
+
+        const {
+            encryptedKey,
+            encryptedMetadata,
+            fileName,
+            ...filteredDocument
+        } = doc;
+
+        // check if publicURL is cached
+        const cachedPublicUrl = await this.cache.get('document:url:' + doc.id) as { publicUrl: string };
+
+        if (!cachedPublicUrl) {
+            const publicUrl = await this.storageService.createSignedURL(
+                doc.fileMimeType,
+                bucketPath,
+                60 * 60 * 24
+            );
+
+            // cache publicURL 
+            await this.cache.set(
+                'document:url:' + doc.id,
+                { publicUrl },
+                60 * 60 * 24
+            );
+
+            return { ...filteredDocument, publicUrl };
+        }
+
+        return { ...filteredDocument, publicUrl: cachedPublicUrl.publicUrl };
     }
 
     // update document metadata

@@ -29,19 +29,34 @@ export type UpdateDocumentSchema = Partial<{
     originalName: string;
 }>
 
-// response schemas
-export type DocumentPublic = Omit<Document, 'encryptedKey' | 'fileName' | 'encryptedMetadata'> & {
-    user?: UserPublic;
-    publicUrl?: string
-};
+export type DecryptedDocument<T extends DocumentPublic | SharedDocument> =
+    Omit<T, 'encryptedKey' | 'fileName' | 'encryptedMetadata'> & {
+        publicUrl: string;
+    };
 
+// response schemas
 export interface ICreateDocumentPublic extends BaseApiReturn {
     document?: DocumentPublic;
 }
-export interface IGetAllDocumentPublic extends BaseApiReturn {
+export interface IGetAllDocumentsPublic extends BaseApiReturn {
     documents: DocumentPublic[];
 }
 
 export interface IUpdateDocumentPublic extends BaseApiReturn {
     document?: DocumentPublic;
 }
+
+export interface IGetSharedDocumentsPublic extends BaseApiReturn {
+    documents: SharedDocument[];
+}
+
+export type DocumentPublic = Omit<Document, 'encryptedKey' | 'fileName' | 'encryptedMetadata'> & {
+    user?: UserPublic;
+    publicUrl?: string
+};
+
+export type SharedDocument = Omit<Document, 'encryptedKey' | 'fileName' | 'encryptedMetadata'> & {
+    isOwner: boolean;
+    ownerUser: UserPublic;
+    publicUrl?: string
+};

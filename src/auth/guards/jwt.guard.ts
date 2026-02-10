@@ -24,13 +24,9 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException('Pas de token fournis');
         }
 
-        try {
-            const payload = await this.jwtService.verifyToken(token) as UserPayload;
-            request['user'] = payload;
-        }
-        catch (err) {
-            throw new UnauthorizedException('Token invalide ou expiré');
-        }
+        const payload = await this.jwtService.verifyToken(token) as UserPayload;
+
+        request['user'] = payload;
 
         return true;
 

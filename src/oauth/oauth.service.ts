@@ -16,7 +16,7 @@ import {
 } from 'src/core/interfaces';
 import { formatEncryptedData, generateRandomString } from 'src/core/utils/crypto-utils';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
+import { JWT_ACCESS_TOKEN_DURATION, JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
 import { UserRepository } from 'src/user/user.repository';
 import { User } from 'src/drizzle/schemas';
 import {
@@ -237,7 +237,9 @@ export class OauthService {
     const JWTpayload = { id: userId, email };
 
     return {
-      accessToken: await this.jwtService.createJWT(JWTpayload),
+      accessToken: await this.jwtService.createJWT(JWTpayload, {
+        expiresIn: JWT_ACCESS_TOKEN_DURATION
+      }),
       refreshToken: updatedUser?.refreshToken as string,
       message: 'Utilisateur connecté avec succés avec Google',
     };

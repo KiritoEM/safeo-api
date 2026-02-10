@@ -46,7 +46,7 @@ export const documentsSharesRelations = relations(
     sharedWith: one(users, {
       fields: [documentShares.sharedUserId],
       references: [users.id],
-      relationName: '',
+      relationName: 'sharedWith',
     }),
     document: one(documents, {
       fields: [documentShares.documentId],
