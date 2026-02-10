@@ -38,6 +38,8 @@ export class DocumentSharesService {
 
         const appLink = `${INVITE_BASE_URL}?token=${tokenInvite}`;
 
+        this.logger.log(appLink);
+
         // send link to invited email
         try {
             await this.mailService.sendEmail({
@@ -46,7 +48,7 @@ export class DocumentSharesService {
                 template: 'send-invitation',
                 context: {
                     inviterName: user.fullName,
-                    appLink
+                    inviteLink: appLink
                 }
                 ,
             });
