@@ -9,7 +9,7 @@ export type AesGcmPayloadSchema = {
 
 export type AesGcmParamsSchema = AesGcmPayloadSchema & {
   key: string;
-}
+};
 
 export const generateRandomString = (length: number = 128) => {
   return randomBytes(length).toString('hex');
@@ -71,7 +71,10 @@ export const aes256GcmDecrypt = (params: AesGcmParamsSchema): string => {
   return decrypted;
 };
 
-export const aes256GcmEncryptBuffer = (buffer: Buffer, key: string): Promise<AesGcmPayloadSchema> => {
+export const aes256GcmEncryptBuffer = (
+  buffer: Buffer,
+  key: string,
+): Promise<AesGcmPayloadSchema> => {
   const IV = randomBytes(16);
   const keyBuffer = Buffer.from(key, 'hex');
 
@@ -94,20 +97,26 @@ export const aes256GcmEncryptBuffer = (buffer: Buffer, key: string): Promise<Aes
           encrypted,
           IV: IV.toString('hex'),
           tag: tag.toString('hex'),
-        })
+        });
       })
-      .on('error', reject)
-  })
+      .on('error', reject);
+  });
 };
 
-export const formatEncryptedData = (IV: string, encrytped: string, tag: string): string => `${IV}:${encrytped}:${tag}`;
+export const formatEncryptedData = (
+  IV: string,
+  encrytped: string,
+  tag: string,
+): string => `${IV}:${encrytped}:${tag}`;
 
-export const decomposeEncryptedData = (encrypted: string): AesGcmPayloadSchema => {
+export const decomposeEncryptedData = (
+  encrypted: string,
+): AesGcmPayloadSchema => {
   const decomposedEncrypted: string[] = encrypted.split(':');
 
   return {
     IV: decomposedEncrypted[0],
     encrypted: decomposedEncrypted[1],
-    tag: decomposedEncrypted[2]
-  }
+    tag: decomposedEncrypted[2],
+  };
 };

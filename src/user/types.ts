@@ -59,8 +59,7 @@ export type PKCEGeneratorResponse = {
   codeChallenge: string;
 };
 
-
 export type UserPublic = Omit<
   User,
   'encryptedKey' | 'refreshToken' | 'password'
->
+>;

@@ -1,1 +1,2 @@
-export const INVITE_BASE_URL = 'https://safeo-api.greny.app/v1/api/document-shares/invite';
+export const INVITE_BASE_URL =
+  'https://safeo-api.greny.app/v1/api/document-shares/invite';

@@ -18,7 +18,7 @@ export class UserRepository {
   constructor(
     @Inject('DrizzleAsyncProvider')
     private readonly db: drizzleProvider.DrizzleDB,
-  ) { }
+  ) {}
 
   async findUserById(id: string): Promise<User | null> {
     const user = await this.db.query.users.findFirst({
@@ -28,14 +28,19 @@ export class UserRepository {
     return user ?? null;
   }
 
-  async checkStorageStatus(id: string, fileToUploadSize: number): Promise<UserStorageStatusEnum> {
+  async checkStorageStatus(
+    id: string,
+    fileToUploadSize: number,
+  ): Promise<UserStorageStatusEnum> {
     const user = await this.findUserById(id);
 
     if (!user) return UserStorageStatusEnum.UNAVAILABLE;
 
-    if (user.storageLimits! == user.storageUsed!) return UserStorageStatusEnum.FULL;
+    if (user.storageLimits! == user.storageUsed!)
+      return UserStorageStatusEnum.FULL;
 
-    if (user.storageLimits! <= fileToUploadSize + user.storageUsed!) return UserStorageStatusEnum.INSUFFICIENT;
+    if (user.storageLimits! <= fileToUploadSize + user.storageUsed!)
+      return UserStorageStatusEnum.INSUFFICIENT;
 
     return UserStorageStatusEnum.AVAILABLE;
   }

@@ -6,19 +6,22 @@ import morgan from 'morgan';
 import { AllExceptionsFilter } from './core/configs/allexceptions.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import * as express from "express";
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.use('/.well-known', express.static(join(__dirname, '..', 'public', '.well-known')));
+  app.use(
+    '/.well-known',
+    express.static(join(__dirname, '..', 'public', '.well-known')),
+  );
 
   app.enableVersioning({
     type: VersioningType.URI,
   });
 
   app.setGlobalPrefix('v1/api', {
-    exclude: ['.well-known/*']
+    exclude: ['.well-known/*'],
   });
 
   app.useGlobalFilters(new AllExceptionsFilter());
@@ -60,14 +63,17 @@ async function bootstrap() {
         },
       },
     })
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      name: 'JWT',
-      description: 'Enter JWT token',
-      in: 'header',
-    }, 'JWT-auth',)
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
     .build();
 
   const documentFactory = () =>

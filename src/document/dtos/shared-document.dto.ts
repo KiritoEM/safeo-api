@@ -4,78 +4,76 @@ import { FileTypeEnum } from 'src/core/enums/file-enums';
 import { UserDto } from 'src/user/dtos/user.dto';
 
 export class SharedDocumentDto {
-    @ApiProperty({
-        type: 'string',
-        format: 'uuid',
-    })
-    id!: string;
+  @ApiProperty({
+    type: 'string',
+    format: 'uuid',
+  })
+  id!: string;
 
-    @ApiProperty({
-        type: 'string',
-    })
-    originalName!: string;
+  @ApiProperty({
+    type: 'string',
+  })
+  originalName!: string;
 
-    @ApiProperty({
-        type: 'number',
-    })
-    fileSize!: number;
+  @ApiProperty({
+    type: 'number',
+  })
+  fileSize!: number;
 
-    @ApiProperty({
-        type: 'string',
-    })
-    fileMimeType!: string;
+  @ApiProperty({
+    type: 'string',
+  })
+  fileMimeType!: string;
 
-    @ApiProperty({
-        enum: FileTypeEnum,
-        default: FileTypeEnum.DOCUMENT,
-    })
-    fileType!: FileTypeEnum;
+  @ApiProperty({
+    enum: FileTypeEnum,
+    default: FileTypeEnum.DOCUMENT,
+  })
+  fileType!: FileTypeEnum;
 
-    @ApiProperty({
-        enum: DocumentAccessLevelEnum,
-        required: false,
-    })
-    accessLevel?: DocumentAccessLevelEnum;
+  @ApiProperty({
+    enum: DocumentAccessLevelEnum,
+    required: false,
+  })
+  accessLevel?: DocumentAccessLevelEnum;
 
-    @ApiProperty({
-        type: 'boolean',
-        default: false,
-    })
-    isDeleted!: boolean;
+  @ApiProperty({
+    type: 'boolean',
+    default: false,
+  })
+  isDeleted!: boolean;
 
-    @ApiProperty({
-        type: 'string',
-        format: 'date-time',
-        required: false,
-    })
-    deletedAt?: Date;
+  @ApiProperty({
+    type: 'string',
+    format: 'date-time',
+    required: false,
+  })
+  deletedAt?: Date;
 
-    @ApiProperty({
-        type: 'string',
-        format: 'uuid',
-    })
-    userId!: string;
+  @ApiProperty({
+    type: 'string',
+    format: 'uuid',
+  })
+  userId!: string;
 
-    @ApiProperty({
-        type: 'string',
-        format: 'date-time',
-    })
-    createdAt!: Date;
+  @ApiProperty({
+    type: 'string',
+    format: 'date-time',
+  })
+  createdAt!: Date;
 
-    @ApiProperty({
-        type: 'string',
-        format: 'date-time',
-    })
-    updatedAt!: Date;
+  @ApiProperty({
+    type: 'string',
+    format: 'date-time',
+  })
+  updatedAt!: Date;
 
-    @ApiProperty({ type: 'string', })
-    publicUrl!: Date;
+  @ApiProperty({ type: 'string' })
+  publicUrl!: Date;
 
-    @ApiProperty({ type: 'boolean', })
-    isOwner!: boolean;
+  @ApiProperty({ type: 'boolean' })
+  isOwner!: boolean;
 
-    @ApiProperty(
-        { type: () => UserDto }
-    )
-    ownerUser!: UserDto;
+  @ApiProperty({ type: () => UserDto })
+  ownerUser!: UserDto;
 }

@@ -14,9 +14,15 @@ import {
   IRequestGoogleTokenResponse,
   IUserFromTokenResponse,
 } from 'src/core/interfaces';
-import { formatEncryptedData, generateRandomString } from 'src/core/utils/crypto-utils';
+import {
+  formatEncryptedData,
+  generateRandomString,
+} from 'src/core/utils/crypto-utils';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { JWT_ACCESS_TOKEN_DURATION, JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
+import {
+  JWT_ACCESS_TOKEN_DURATION,
+  JWT_REFRESH_TOKEN_DURATION,
+} from 'src/core/constants/jwt-constants';
 import { UserRepository } from 'src/user/user.repository';
 import { User } from 'src/drizzle/schemas';
 import {
@@ -43,7 +49,7 @@ export class OauthService {
     private userService: UserService,
     private encryptionKeyService: EncryptionKeyService,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
-  ) { }
+  ) {}
 
   // generate google Auth URL to open in browser
   generateGoogleAuthUrl(codeChallenge: string): string {
@@ -102,7 +108,7 @@ export class OauthService {
     );
   }
 
-  // exchange authorization code to access token 
+  // exchange authorization code to access token
   async exchangeCodeToToken(
     codeVerifier: string,
     code: string,
@@ -131,7 +137,9 @@ export class OauthService {
       const encryptionPayload = this.encryptionKeyService.generateAESKek();
 
       if (!encryptionPayload) {
-        throw new InternalServerErrorException('Impossible de créer la clé de chiffrement');
+        throw new InternalServerErrorException(
+          'Impossible de créer la clé de chiffrement',
+        );
       }
 
       const newUser = await this.userService.createNewUser(
@@ -141,7 +149,11 @@ export class OauthService {
           type: '0Auth',
           provider: 'GOOGLE',
           accessToken: responsePayload.access_token,
-          encryptedKey: formatEncryptedData(encryptionPayload.IV, encryptionPayload.encrypted as string, encryptionPayload.tag),
+          encryptedKey: formatEncryptedData(
+            encryptionPayload.IV,
+            encryptionPayload.encrypted as string,
+            encryptionPayload.tag,
+          ),
           tokenType: 'Bearer',
           expiresAt: responsePayload.expires_in,
           scope: responsePayload.scope,
@@ -152,19 +164,12 @@ export class OauthService {
         AuthTypeEnum.OAUTH,
       );
 
-
       if (!newUser)
         throw new BadRequestException("Impossible de créer l'utilisateur");
 
       // return generated auth tokens
       return {
-        ...(
-          await this.generateTokens(
-            newUser.id,
-            newUser.email,
-            ipAddress,
-          )
-        )
+        ...(await this.generateTokens(newUser.id, newUser.email, ipAddress)),
       };
     }
 
@@ -238,7 +243,7 @@ export class OauthService {
 
     return {
       accessToken: await this.jwtService.createJWT(JWTpayload, {
-        expiresIn: JWT_ACCESS_TOKEN_DURATION
+        expiresIn: JWT_ACCESS_TOKEN_DURATION,
       }),
       refreshToken: updatedUser?.refreshToken as string,
       message: 'Utilisateur connecté avec succés avec Google',

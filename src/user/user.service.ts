@@ -18,10 +18,12 @@ export class UserService {
   constructor(
     private userRepository: UserRepository,
     private accountRespository: AccountRepository,
-    private logRepository: ActivityLogRepository
-  ) { }
+    private logRepository: ActivityLogRepository,
+  ) {}
 
-  async getUserById(userId: string, ipAddress?: string
+  async getUserById(
+    userId: string,
+    ipAddress?: string,
   ): Promise<UserPublic | null> {
     const user = await this.userRepository.findUserById(userId);
 
@@ -36,7 +38,7 @@ export class UserService {
       action: AUDIT_ACTIONS.GET_USER_INFO,
       target: AUDIT_TARGET.USER,
       userId,
-      ipAddress
+      ipAddress,
     });
 
     return userPublic ?? null;
@@ -67,7 +69,7 @@ export class UserService {
 
   async updateAccount(
     userId: string,
-    accountData: UpdateAccountSchema
+    accountData: UpdateAccountSchema,
   ): Promise<Account | null> {
     const user = await this.userRepository.findUserById(userId);
 

@@ -8,16 +8,8 @@ import { DocumentSharesRepository } from './document-shares.repository';
 import { DrizzleModule } from 'src/drizzle/drizzle.module';
 
 @Module({
-    imports: [
-        MailModule,
-        UserModule,
-        JwtUtilsModule,
-        DrizzleModule
-    ],
-    controllers: [DocumentSharesController],
-    providers: [
-        DocumentSharesService,
-        DocumentSharesRepository
-    ]
+  imports: [MailModule, UserModule, JwtUtilsModule, DrizzleModule],
+  controllers: [DocumentSharesController],
+  providers: [DocumentSharesService, DocumentSharesRepository],
 })
-export class DocumentSharesModule { }
+export class DocumentSharesModule {}

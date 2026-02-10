@@ -42,9 +42,7 @@ import { Throttle } from '@nestjs/throttler';
 @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5/min
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService
-  ) { }
+  constructor(private authService: AuthService) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -65,7 +63,6 @@ export class AuthController {
   async login(@Body() loginDto: LoginDTO, @Ip() ip): Promise<IloginResponse> {
     //login user
     const user = await this.authService.login(loginDto);
-
 
     //send 2FA code if user has logged successfully
     await this.authService.sendLoginOTP(user.email, user.id, ip);
@@ -90,12 +87,12 @@ export class AuthController {
   async resendLoginOTP(
     @Body() loginOtpDto: ResendOtpDTO,
     @Req() req: Request,
-    @Ip() ip
+    @Ip() ip,
   ): Promise<IloginResponse> {
     // send 2FA code
     const { verificationToken } = await this.authService.resendLoginOTP(
       loginOtpDto.verificationToken,
-      ip
+      ip,
     );
 
     return {
@@ -122,12 +119,12 @@ export class AuthController {
   async verifyLoginOTP(
     @Body() verify2faDto: Verify2FADto,
     @Req() req: Request,
-    @Ip() ip
+    @Ip() ip,
   ): Promise<Iverify2FAResponse> {
     const otpVerificationResponse = await this.authService.verifyLoginOTP(
       verify2faDto.code,
       verify2faDto.verificationToken,
-      ip
+      ip,
     );
 
     return {
@@ -216,7 +213,7 @@ export class AuthController {
   async verifySignupOTP(
     @Body() verify2faDto: Verify2FADto,
     @Req() req: Request,
-    @Ip() ip
+    @Ip() ip,
   ): Promise<Iverify2FAResponse> {
     // verify 2FA
     const otpVerificationResponse = await this.authService.verifySignupOTP(
@@ -228,7 +225,7 @@ export class AuthController {
     const createdUser = await this.authService.createNewUser(
       otpVerificationResponse,
       verify2faDto.verificationToken,
-      ip
+      ip,
     );
 
     return {
@@ -255,11 +252,11 @@ export class AuthController {
   })
   async refreshAccessToken(
     @Body() refreshTokenDto: refreshAccessTokenDto,
-    @Ip() ip
+    @Ip() ip,
   ): Promise<IrefreshTokenResponse> {
     const { accessToken } = await this.authService.refreshAccesToken(
       refreshTokenDto.refreshToken,
-      ip
+      ip,
     );
 
     return {

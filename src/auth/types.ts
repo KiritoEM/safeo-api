@@ -57,4 +57,3 @@ export type SendLoginEmailParams = {
 
 // user JWT Payload
 export type UserPayload = Pick<User, 'id' | 'email'>;
-

@@ -11,7 +11,10 @@ import * as cacheManager from 'cache-manager';
 import { comparePassword, hashPassword } from 'src/core/utils/hashing_utils';
 import { User } from 'src/drizzle/schemas';
 import { OtpService } from 'src/otp/otp.service';
-import { formatEncryptedData, generateRandomString } from 'src/core/utils/crypto-utils';
+import {
+  formatEncryptedData,
+  generateRandomString,
+} from 'src/core/utils/crypto-utils';
 import {
   CachedUserLogin,
   CachedUserSignup,
@@ -21,7 +24,10 @@ import {
 } from './types';
 import { UserRepository } from '../user/user.repository';
 import { SendOtpService } from './send-otp.service';
-import { JWT_ACCESS_TOKEN_DURATION, JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
+import {
+  JWT_ACCESS_TOKEN_DURATION,
+  JWT_REFRESH_TOKEN_DURATION,
+} from 'src/core/constants/jwt-constants';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
@@ -37,7 +43,7 @@ export class AuthService {
     private encryptionKeyService: EncryptionKeyService,
     private jwtService: JwtUtilsService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
-  ) { }
+  ) {}
 
   // login user
   async login(
@@ -102,14 +108,14 @@ export class AuthService {
       action: AUDIT_ACTIONS.LOGIN_ACTION,
       target: AUDIT_TARGET.USER,
       userId,
-      ipAddress
+      ipAddress,
     });
   }
 
   // Resend OTP verification for login
   async resendLoginOTP(
     verificationToken: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<{ verificationToken: string }> {
     const newVerificationToken = generateRandomString(32);
 
@@ -150,7 +156,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.LOGIN_RESEND_OTP_ACTION,
       target: AUDIT_TARGET.USER,
       userId: cacheParam.id,
-      ipAddress
+      ipAddress,
     });
 
     return {
@@ -162,7 +168,7 @@ export class AuthService {
   async verifyLoginOTP(
     otpCode: string,
     verificationToken: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<VerifyLoginResponse> {
     // get cached user info
     const cacheParam = (await this.cache.get(
@@ -200,7 +206,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.LOGIN_VALID_OTP_ACTION,
       target: AUDIT_TARGET.USER,
       userId: cacheParam.id,
-      ipAddress
+      ipAddress,
     });
 
     // delete caches after user created
@@ -214,8 +220,8 @@ export class AuthService {
       accessToken: await this.jwtService.createJWT(
         { id: cacheParam.id, email: cacheParam.email },
         {
-          expiresIn: JWT_ACCESS_TOKEN_DURATION
-        }
+          expiresIn: JWT_ACCESS_TOKEN_DURATION,
+        },
       ),
       refreshToken,
     };
@@ -339,7 +345,11 @@ export class AuthService {
   }
 
   // create new user
-  async createNewUser(data: SignupSchema, verificationToken?: string, ipAddress?: string): Promise<{ refreshToken: string; accessToken: string }> {
+  async createNewUser(
+    data: SignupSchema,
+    verificationToken?: string,
+    ipAddress?: string,
+  ): Promise<{ refreshToken: string; accessToken: string }> {
     // generate refresh token
     const refreshToken = this.jwtService.createJWT(
       {},
@@ -352,12 +362,18 @@ export class AuthService {
     const encryptionPayload = this.encryptionKeyService.generateAESKek();
 
     if (!encryptionPayload) {
-      throw new InternalServerErrorException('Impossible de créer la clé de chiffrement');
+      throw new InternalServerErrorException(
+        'Impossible de créer la clé de chiffrement',
+      );
     }
 
     const userToAdd = {
       ...data,
-      encryptedKey: formatEncryptedData(encryptionPayload.IV, encryptionPayload.encrypted as string, encryptionPayload.tag),
+      encryptedKey: formatEncryptedData(
+        encryptionPayload.IV,
+        encryptionPayload.encrypted as string,
+        encryptionPayload.tag,
+      ),
       refreshToken,
     };
 
@@ -368,7 +384,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.SIGNUP_VALID_OTP_ACTION,
       target: AUDIT_TARGET.USER,
       userId: user[0].id,
-      ipAddress
+      ipAddress,
     });
 
     // delete caches after user created
@@ -378,14 +394,17 @@ export class AuthService {
 
     return {
       refreshToken: user[0].refreshToken!,
-      accessToken: await this.jwtService.createJWT({ id: user[0].id, email: user[0].email })
+      accessToken: await this.jwtService.createJWT({
+        id: user[0].id,
+        email: user[0].email,
+      }),
     };
   }
 
   // refresh access token using refresh token
   async refreshAccesToken(
     refreshToken: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<{ accessToken: string }> {
     // validate refresh token
     await this.jwtService.verifyToken(refreshToken);
@@ -405,7 +424,7 @@ export class AuthService {
       action: AUDIT_ACTIONS.REFRESH_ACCESS_TOKEN_ACTION,
       target: AUDIT_TARGET.USER,
       userId: user.id,
-      ipAddress
+      ipAddress,
     });
 
     // create JWT Token
@@ -416,7 +435,7 @@ export class AuthService {
 
     return {
       accessToken: await this.jwtService.createJWT(JWTPayload, {
-        expiresIn: JWT_ACCESS_TOKEN_DURATION
+        expiresIn: JWT_ACCESS_TOKEN_DURATION,
       }),
     };
   }

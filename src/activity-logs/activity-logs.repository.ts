@@ -11,7 +11,7 @@ export class ActivityLogRepository {
   constructor(
     @Inject('DrizzleAsyncProvider')
     private readonly db: drizzleProvider.DrizzleDB,
-  ) { }
+  ) {}
 
   async log(data: CreateActivityLogSchema) {
     const createdLog = await this.db

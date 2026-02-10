@@ -3,7 +3,7 @@ import { supabaseProvider } from './supabase.provider';
 import { SupabaseService } from './supabase.service';
 
 @Module({
-    providers: [...supabaseProvider, SupabaseService],
-    exports: [...supabaseProvider, SupabaseService]
+  providers: [...supabaseProvider, SupabaseService],
+  exports: [...supabaseProvider, SupabaseService],
 })
-export class SupabaseModule { }
+export class SupabaseModule {}

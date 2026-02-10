@@ -1,4 +1,4 @@
 export enum DocumentAccessLevelEnum {
-    PRIVATE = 'private',
-    SHAREABLE = 'shareable'
+  PRIVATE = 'private',
+  SHAREABLE = 'shareable',
 }

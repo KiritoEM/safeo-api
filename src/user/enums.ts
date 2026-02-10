@@ -1,6 +1,6 @@
 export enum UserStorageStatusEnum {
-    AVAILABLE,
-    INSUFFICIENT,
-    FULL,
-    UNAVAILABLE
-};
+  AVAILABLE,
+  INSUFFICIENT,
+  FULL,
+  UNAVAILABLE,
+}

@@ -16,7 +16,7 @@ import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
     UserModule,
     SupabaseModule,
     DrizzleModule,
-    JwtUtilsModule
-  ]
+    JwtUtilsModule,
+  ],
 })
-export class DocumentModule { }
+export class DocumentModule {}

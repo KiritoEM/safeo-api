@@ -17,7 +17,7 @@ import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
     ConfigModule,
     UserModule,
     EncryptionKeyModule,
-    JwtUtilsModule
+    JwtUtilsModule,
   ],
 })
-export class OauthModule { }
+export class OauthModule {}

@@ -8,4 +8,4 @@ import { DrizzleModule } from 'src/drizzle/drizzle.module';
   exports: [ActivityLogRepository],
   imports: [DrizzleModule],
 })
-export class ActivityLogsModule { }
+export class ActivityLogsModule {}

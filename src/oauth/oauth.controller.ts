@@ -9,7 +9,7 @@ import {
   Ip,
   Post,
   Query,
-  Res
+  Res,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -42,9 +42,7 @@ import { Throttle } from '@nestjs/throttler';
 @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5/min
 @Controller('oauth')
 export class OauthController {
-  constructor(
-    private oauthService: OauthService,
-  ) { }
+  constructor(private oauthService: OauthService) {}
 
   @Get('pkce-generator')
   @HttpCode(HttpStatus.CREATED)
@@ -106,17 +104,17 @@ export class OauthController {
   })
   async exchangeToken(
     @Body() exchangeTokenDto: ExchangeTokenDto,
-    @Ip() ip
+    @Ip() ip,
   ): Promise<types.ExchangeTokenResponse> {
     const tokensPayload = await this.oauthService.exchangeCodeToToken(
       exchangeTokenDto.codeVerifier,
       exchangeTokenDto.authorizationCode,
-      ip
+      ip,
     );
 
     return {
       statusCode: HttpStatus.OK,
-      ...tokensPayload
+      ...tokensPayload,
     };
   }
 

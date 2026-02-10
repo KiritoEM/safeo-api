@@ -35,7 +35,7 @@ import { JwtUtilsModule } from './jwt-utils/jwt-utils.module';
         mailConfig,
         jwtConfig,
         encryptionConfig,
-        supabaseConfig
+        supabaseConfig,
       ],
     }),
     ThrottlerModule.forRoot([
@@ -47,13 +47,13 @@ import { JwtUtilsModule } from './jwt-utils/jwt-utils.module';
       {
         name: 'medium',
         ttl: 10000,
-        limit: 20
+        limit: 20,
       },
       {
         name: 'long',
         ttl: 60000,
-        limit: 100
-      }
+        limit: 100,
+      },
     ]),
     OauthModule,
     DrizzleModule,
@@ -70,6 +70,6 @@ import { JwtUtilsModule } from './jwt-utils/jwt-utils.module';
     SupabaseModule,
     DocumentSharesModule,
     JwtUtilsModule,
-  ]
+  ],
 })
-export class AppModule { }
+export class AppModule {}

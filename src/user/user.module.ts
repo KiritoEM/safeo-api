@@ -9,13 +9,8 @@ import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
 
 @Module({
   providers: [UserService, UserRepository],
-  imports: [
-    DrizzleModule,
-    AccountModule,
-    AuthModule,
-    JwtUtilsModule
-  ],
+  imports: [DrizzleModule, AccountModule, AuthModule, JwtUtilsModule],
   exports: [UserService, UserRepository],
   controllers: [UserController],
 })
-export class UserModule { }
+export class UserModule {}
