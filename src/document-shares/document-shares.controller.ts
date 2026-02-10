@@ -6,7 +6,7 @@ import { ApiBearerAuth, ApiBody, ApiNotFoundResponse, ApiOkResponse, ApiOperatio
 import { AuthGuard } from 'src/auth/guards/jwt.guard';
 import * as types from 'src/auth/types';
 import { BaseApiReturn } from 'src/core/interfaces';
-import { AcceptInviteQueryDTO } from './dtos/accept-invite-dto';
+import { AcceptInviteDTO, AcceptInviteQueryDTO, AcceptInviteResponseDTO } from './dtos/accept-invite-dto';
 import express from 'express';
 import { renderInvitationTemplate } from './templates/invitation_redirection_success';
 import { INVITE_BASE_URL } from './constants';
@@ -26,7 +26,8 @@ export class DocumentSharesController {
     @ApiOperation({
         summary:
             "Partager un lien d'invitation par email",
-    }) @ApiBody({ type: ShareLinkDto })
+    })
+    @ApiBody({ type: ShareLinkDto })
     @ApiOkResponse({
         description: "Lien d'invitation envoyée avec succés",
         type: ShareLinkResponseDto,
@@ -94,8 +95,10 @@ export class DocumentSharesController {
     @ApiOperation({
         summary: "Accepter l'invitation depuis l'application (authentifié)",
     })
+    @ApiBody({ type: AcceptInviteDTO })
     @ApiOkResponse({
         description: "Invitation acceptée avec succès",
+        type: AcceptInviteResponseDTO
     })
     @ApiNotFoundResponse({
         description: 'Utilisateur invité introuvable',
@@ -105,13 +108,13 @@ export class DocumentSharesController {
     })
     async acceptInviteInApp(
         @UserReq() userReq: types.UserPayload,
-        @Body('token') token: string,
+        @Body() body: AcceptInviteDTO,
     ): Promise<BaseApiReturn> {
-        if (!token) {
+        if (!body.token) {
             throw new UnauthorizedException("Aucun jeton d'invitation");
         }
 
-        await this.documentSharesService.acceptInvite(userReq.id, token);
+        await this.documentSharesService.acceptInvite(userReq.id, body.token);
 
         return {
             statusCode: HttpStatus.OK,
