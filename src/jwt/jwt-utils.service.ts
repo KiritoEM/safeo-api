@@ -11,6 +11,7 @@ export class JwtUtilsService {
             return await this.jwtService.verifyAsync(token);
         } catch (error: any) {
             if (error instanceof Error) {
+                console.log("error: ", error);
                 if (error.name === 'TokenExpiredError') {
                     throw new UnauthorizedException('Le token a expiré');
                 }

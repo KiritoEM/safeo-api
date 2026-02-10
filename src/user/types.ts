@@ -54,7 +54,6 @@ export interface IGetUserInfoResponse extends BaseApiReturn {
   user?: UserPublic;
 }
 
-
 export type PKCEGeneratorResponse = {
   codeVerifier: string;
   codeChallenge: string;

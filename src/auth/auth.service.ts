@@ -21,7 +21,7 @@ import {
 } from './types';
 import { UserRepository } from '../user/user.repository';
 import { SendOtpService } from './send-otp.service';
-import { JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
+import { JWT_ACCESS_TOKEN_DURATION, JWT_REFRESH_TOKEN_DURATION } from 'src/core/constants/jwt-constants';
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
@@ -211,7 +211,12 @@ export class AuthService {
     return {
       id: cacheParam.id,
       email: cacheParam.id,
-      accessToken: await this.jwtService.createJWT({ id: cacheParam.id, email: cacheParam.email }),
+      accessToken: await this.jwtService.createJWT(
+        { id: cacheParam.id, email: cacheParam.email },
+        {
+          expiresIn: JWT_ACCESS_TOKEN_DURATION
+        }
+      ),
       refreshToken,
     };
   }
@@ -410,7 +415,9 @@ export class AuthService {
     };
 
     return {
-      accessToken: await this.jwtService.createJWT(JWTPayload),
+      accessToken: await this.jwtService.createJWT(JWTPayload, {
+        expiresIn: JWT_ACCESS_TOKEN_DURATION
+      }),
     };
   }
 }

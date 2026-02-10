@@ -12,9 +12,10 @@ import { CustomFileValidator } from 'src/core/validators/file.validator';
 import type { MulterFile } from 'src/types/multer';
 import { UpdateDocumentDTO, UpdateDocumentResponseDTO } from './dtos/update-document.dto';
 import { DocumentService } from './document.service';
-import { GetAllDocumentQueryDTO, GetAllDocumentResponseDTO } from './dtos/get-all-document.dto';
-import { ICreateDocumentPublic, IGetAllDocumentPublic, IUpdateDocumentPublic } from './types';
+import { GetAllDocumentsQueryDTO, GetAllDocumentsResponseDTO } from './dtos/get-all-document.dto';
+import { ICreateDocumentPublic, IGetAllDocumentsPublic, IUpdateDocumentPublic, IGetSharedDocumentsPublic } from './types';
 import { UploadDocumentDTO, UploadDocumentPublicDTO } from './dtos/upload-document.dto';
+import { GetSharedDocumentsQueryDTO, GetSharedDocumentsResponseDTO } from './dtos/get-shared-document.dto';
 
 @ApiTags('Document')
 @ApiBearerAuth('JWT-auth')
@@ -22,7 +23,6 @@ import { UploadDocumentDTO, UploadDocumentPublicDTO } from './dtos/upload-docume
 @Controller('document')
 export class DocumentController {
     constructor(private documentService: DocumentService, @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,) { }
-
 
     @Throttle({ short: { limit: 20, ttl: 6000 } }) // 20/minute
     @Post('upload')
@@ -73,13 +73,13 @@ export class DocumentController {
     })
     @ApiOkResponse({
         description: 'Documents récupérés avec succès',
-        type: GetAllDocumentResponseDTO,
+        type: GetAllDocumentsResponseDTO,
     })
     async getDocuments(
         @UserReq() user: types.UserPayload,
         @Ip() Ip,
-        @Query() filterQuery: GetAllDocumentQueryDTO
-    ): Promise<IGetAllDocumentPublic> {
+        @Query() filterQuery: GetAllDocumentsQueryDTO
+    ): Promise<IGetAllDocumentsPublic> {
         const allDocuments = await this.documentService.getAllDocuments(
             user.id,
             Ip,
@@ -90,6 +90,28 @@ export class DocumentController {
             statusCode: HttpStatus.OK,
             documents: allDocuments,
             message: 'Documents récupérés avec succès'
+        }
+    }
+
+    @Get('/shared-documents')
+    @ApiOperation({
+        summary: "Récuperer les documents partagés d'un utilisateur",
+    })
+    @ApiOkResponse({
+        description: 'Documents partagés récupérés avec succès',
+        type: GetSharedDocumentsResponseDTO,
+    })
+    async getSharedDocuments(
+        @UserReq() user: types.UserPayload,
+        @Ip() Ip,
+        @Query() filterQuery: GetSharedDocumentsQueryDTO
+    ): Promise<IGetSharedDocumentsPublic> {
+        const sharedDocuments = await this.documentService.getSharedDocuments(user.id, Ip, filterQuery);
+
+        return {
+            statusCode: HttpStatus.OK,
+            documents: sharedDocuments,
+            message: 'Documents partagés récupérés avec succès'
         }
     }
 
