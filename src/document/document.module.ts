@@ -18,5 +18,6 @@ import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
     DrizzleModule,
     JwtUtilsModule,
   ],
+  exports: [DocumentRepository, DocumentService]
 })
 export class DocumentModule {}
