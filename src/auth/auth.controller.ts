@@ -216,21 +216,21 @@ export class AuthController {
     @Ip() ip,
   ): Promise<Iverify2FAResponse> {
     // verify 2FA
-    const otpVerificationResponse = await this.authService.verifySignupOTP(
+    const createdUserData = await this.authService.verifySignupOTP(
       verify2faDto.code,
       verify2faDto.verificationToken,
     );
 
     // create user
-    const createdUser = await this.authService.createNewUser(
-      otpVerificationResponse,
+    const { accessToken, refreshToken } = await this.authService.createNewUser(
+      createdUserData,
       ip,
     );
 
     return {
       statusCode: HttpStatus.CREATED,
-      accessToken: createdUser.accessToken,
-      refreshToken: createdUser.refreshToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       message: 'Inscription réussie! Bienvenue sur Safeo.',
     };
   }

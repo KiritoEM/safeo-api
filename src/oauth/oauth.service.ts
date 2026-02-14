@@ -36,7 +36,7 @@ import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { UserService } from 'src/user/user.service';
 import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
-import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
+import { JwtUtilsService } from 'src/jwt-utils/jwt-utils.service';
 
 @Injectable()
 export class OauthService {
@@ -49,7 +49,7 @@ export class OauthService {
     private userService: UserService,
     private encryptionKeyService: EncryptionKeyService,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
-  ) {}
+  ) { }
 
   // generate google Auth URL to open in browser
   generateGoogleAuthUrl(codeChallenge: string): string {
@@ -239,12 +239,14 @@ export class OauthService {
     // create refresh token
     const updatedUser = await this.createRefreshToken(userId);
 
-    const JWTpayload = { id: userId, email };
+    const JWTPayload = { id: userId, email };
+
+    const accessToken = await this.jwtService.createJWT(JWTPayload, {
+      expiresIn: JWT_ACCESS_TOKEN_DURATION,
+    });
 
     return {
-      accessToken: await this.jwtService.createJWT(JWTpayload, {
-        expiresIn: JWT_ACCESS_TOKEN_DURATION,
-      }),
+      accessToken: accessToken,
       refreshToken: updatedUser?.refreshToken as string,
       message: 'Utilisateur connecté avec succés avec Google',
     };

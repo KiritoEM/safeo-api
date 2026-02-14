@@ -31,7 +31,7 @@ import {
 import { ActivityLogRepository } from 'src/activity-logs/activity-logs.repository';
 import { AUDIT_ACTIONS, AUDIT_TARGET } from 'src/activity-logs/constants';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
-import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
+import { JwtUtilsService } from 'src/jwt-utils/jwt-utils.service';
 
 @Injectable()
 export class AuthService {
@@ -386,12 +386,19 @@ export class AuthService {
       ipAddress,
     });
 
+    // create JWT Token
+    const JWTPayload = {
+      id: user[0].id,
+      email: user[0].email,
+    };
+
+    const accessToken = await this.jwtService.createJWT(JWTPayload, {
+      expiresIn: JWT_ACCESS_TOKEN_DURATION,
+    });
+
     return {
       refreshToken: user[0].refreshToken!,
-      accessToken: await this.jwtService.createJWT({
-        id: user[0].id,
-        email: user[0].email,
-      }),
+      accessToken
     };
   }
 

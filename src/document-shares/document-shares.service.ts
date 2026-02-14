@@ -7,7 +7,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtUtilsService } from 'src/jwt/jwt-utils.service';
+import { JwtUtilsService } from 'src/jwt-utils/jwt-utils.service';
 import { MailService } from 'src/mail/mail.service';
 import { INVITE_BASE_URL } from './constants';
 import { DocumentSharesRepository } from './document-shares.repository';
