@@ -18,7 +18,7 @@ export class UserRepository {
   constructor(
     @Inject('DrizzleAsyncProvider')
     private readonly db: drizzleProvider.DrizzleDB,
-  ) {}
+  ) { }
 
   async findUserById(id: string): Promise<User | null> {
     const user = await this.db.query.users.findFirst({

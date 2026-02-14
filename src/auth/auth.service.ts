@@ -43,7 +43,7 @@ export class AuthService {
     private encryptionKeyService: EncryptionKeyService,
     private jwtService: JwtUtilsService,
     @Inject(CACHE_MANAGER) private cache: cacheManager.Cache,
-  ) {}
+  ) { }
 
   // login user
   async login(
@@ -347,7 +347,6 @@ export class AuthService {
   // create new user
   async createNewUser(
     data: SignupSchema,
-    verificationToken?: string,
     ipAddress?: string,
   ): Promise<{ refreshToken: string; accessToken: string }> {
     // generate refresh token
@@ -386,11 +385,6 @@ export class AuthService {
       userId: user[0].id,
       ipAddress,
     });
-
-    // delete caches after user created
-    if (verificationToken) {
-      await this.cache.del('auth:signup:' + verificationToken);
-    }
 
     return {
       refreshToken: user[0].refreshToken!,

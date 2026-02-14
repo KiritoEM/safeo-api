@@ -42,7 +42,7 @@ import { Throttle } from '@nestjs/throttler';
 @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5/min
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -224,7 +224,6 @@ export class AuthController {
     // create user
     const createdUser = await this.authService.createNewUser(
       otpVerificationResponse,
-      verify2faDto.verificationToken,
       ip,
     );
 

@@ -10,7 +10,7 @@ import { SendLoginEmailParams, SendSignupEmailParams } from './types';
 export class SendOtpService {
   private readonly logger = new Logger(SendOtpService.name);
 
-  constructor(private mailService: MailService) {}
+  constructor(private mailService: MailService) { }
 
   // send login email utility
   async sendLoginEmail(data: SendLoginEmailParams) {
