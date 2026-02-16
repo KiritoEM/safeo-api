@@ -1,5 +1,5 @@
 import { BaseApiReturn } from 'src/core/interfaces';
-import { User } from 'src/drizzle/schemas';
+import { UserPublic } from 'src/user/types';
 
 // Response schemas
 export interface AuthorizeUrlResponse extends BaseApiReturn {

@@ -1,4 +1,3 @@
-import { BaseApiReturn } from 'src/core/interfaces';
 import { User } from 'src/drizzle/schemas';
 
 // Params schemas

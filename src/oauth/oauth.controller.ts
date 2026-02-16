@@ -1,6 +1,4 @@
-import { AuthorizeUrlResponse } from './../../dist/user/types.d';
-import { ExchangeTokenResponse } from './types';
-import { PKCEGeneratorResponse } from './../user/types';
+import * as types from './types';
 import { OauthService } from './oauth.service';
 import {
   BadRequestException,
@@ -28,7 +26,6 @@ import {
   generateCodeChallenge,
 } from 'src/core/utils/pkce-utils';
 import { GeneratePKCECodesDto } from './dtos/generate-pkce-codes.dto';
-import * as types from 'src/user/types';
 import { renderRedirectionTemplate } from './templates/redirection_fallback_template';
 import { OAUTH_ERROR_MESSAGES } from './constants';
 import {
@@ -57,7 +54,7 @@ export class OauthController {
       "Codes PKCE générés pour utiliser dans le processus d'authentification 0Auth",
     type: GeneratePKCECodesDto,
   })
-  async generatePKCECodes(): Promise<PKCEGeneratorResponse> {
+  async generatePKCECodes(): Promise<types.PKCEGeneratorResponse> {
     const codeVerifier = generateCodeVerifier();
 
     return {
@@ -80,7 +77,7 @@ export class OauthController {
   })
   getGoogleAuthorizeUrl(
     @Body() generateAuthUrlDto: GenerateAuthUrlDto,
-  ): AuthorizeUrlResponse {
+  ): types.AuthorizeUrlResponse {
     return {
       statusCode: HttpStatus.CREATED,
       authUrl: this.oauthService.generateGoogleAuthUrl(
@@ -108,7 +105,7 @@ export class OauthController {
   async exchangeToken(
     @Body() exchangeTokenDto: ExchangeTokenDto,
     @Ip() ip,
-  ): Promise<ExchangeTokenResponse> {
+  ): Promise<types.ExchangeTokenResponse> {
     const tokensPayload = await this.oauthService.exchangeCodeToToken(
       exchangeTokenDto.codeVerifier,
       exchangeTokenDto.authorizationCode,
