@@ -40,25 +40,6 @@ export type UpdateUserSchema = Partial<{
   storageUsed?: number;
 }>;
 
-// Response schemas
-export interface AuthorizeUrlResponse extends BaseApiReturn {
-  authUrl: string;
-}
-
-export interface ExchangeTokenResponse extends BaseApiReturn {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface IGetUserInfoResponse extends BaseApiReturn {
-  user?: UserPublic;
-}
-
-export type PKCEGeneratorResponse = {
-  codeVerifier: string;
-  codeChallenge: string;
-};
-
 export type UserPublic = Omit<
   User,
   'encryptedKey' | 'refreshToken' | 'password'

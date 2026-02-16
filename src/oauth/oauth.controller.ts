@@ -1,3 +1,6 @@
+import { AuthorizeUrlResponse } from './../../dist/user/types.d';
+import { ExchangeTokenResponse } from './types';
+import { PKCEGeneratorResponse } from './../user/types';
 import { OauthService } from './oauth.service';
 import {
   BadRequestException,
@@ -42,7 +45,7 @@ import { Throttle } from '@nestjs/throttler';
 @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5/min
 @Controller('oauth')
 export class OauthController {
-  constructor(private oauthService: OauthService) {}
+  constructor(private oauthService: OauthService) { }
 
   @Get('pkce-generator')
   @HttpCode(HttpStatus.CREATED)
@@ -54,7 +57,7 @@ export class OauthController {
       "Codes PKCE générés pour utiliser dans le processus d'authentification 0Auth",
     type: GeneratePKCECodesDto,
   })
-  async generatePKCECodes(): Promise<types.PKCEGeneratorResponse> {
+  async generatePKCECodes(): Promise<PKCEGeneratorResponse> {
     const codeVerifier = generateCodeVerifier();
 
     return {
@@ -77,7 +80,7 @@ export class OauthController {
   })
   getGoogleAuthorizeUrl(
     @Body() generateAuthUrlDto: GenerateAuthUrlDto,
-  ): types.AuthorizeUrlResponse {
+  ): AuthorizeUrlResponse {
     return {
       statusCode: HttpStatus.CREATED,
       authUrl: this.oauthService.generateGoogleAuthUrl(
@@ -105,7 +108,7 @@ export class OauthController {
   async exchangeToken(
     @Body() exchangeTokenDto: ExchangeTokenDto,
     @Ip() ip,
-  ): Promise<types.ExchangeTokenResponse> {
+  ): Promise<ExchangeTokenResponse> {
     const tokensPayload = await this.oauthService.exchangeCodeToToken(
       exchangeTokenDto.codeVerifier,
       exchangeTokenDto.authorizationCode,

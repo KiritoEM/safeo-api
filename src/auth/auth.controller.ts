@@ -121,7 +121,7 @@ export class AuthController {
     @Req() req: Request,
     @Ip() ip,
   ): Promise<Iverify2FAResponse> {
-    const otpVerificationResponse = await this.authService.verifyLoginOTP(
+    const { accessToken, refreshToken } = await this.authService.verifyLoginOTP(
       verify2faDto.code,
       verify2faDto.verificationToken,
       ip,
@@ -129,8 +129,8 @@ export class AuthController {
 
     return {
       statusCode: HttpStatus.OK,
-      accessToken: otpVerificationResponse.accessToken,
-      refreshToken: otpVerificationResponse.refreshToken,
+      accessToken,
+      refreshToken,
       message: 'Connexion réussie',
     };
   }
