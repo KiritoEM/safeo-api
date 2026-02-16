@@ -7,6 +7,7 @@ import { UserModule } from 'src/user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { EncryptionKeyModule } from 'src/encryption/encryption-key.module';
 import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
+import { AccountModule } from 'src/account/account.module';
 
 @Module({
   controllers: [OauthController],
@@ -18,6 +19,7 @@ import { JwtUtilsModule } from 'src/jwt-utils/jwt-utils.module';
     UserModule,
     EncryptionKeyModule,
     JwtUtilsModule,
+    AccountModule
   ],
 })
-export class OauthModule {}
+export class OauthModule { }

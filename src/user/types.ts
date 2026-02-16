@@ -22,6 +22,7 @@ export type CreateUserSchema = Pick<
 > & {
   password: string;
 };
+
 export type UpdateAccountSchema = Pick<
   CreateUserWithAccountSchema,
   | 'accessToken'

@@ -5,6 +5,8 @@ import {
   Inject,
   UnauthorizedException,
   InternalServerErrorException,
+  NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom, Observable, throwError } from 'rxjs';
@@ -24,7 +26,7 @@ import {
   JWT_REFRESH_TOKEN_DURATION,
 } from 'src/core/constants/jwt-constants';
 import { UserRepository } from 'src/user/user.repository';
-import { User } from 'src/drizzle/schemas';
+import { Account, User } from 'src/drizzle/schemas';
 import {
   GOOGLE_AUTHORIZE_REQUEST_URL,
   GOOGLE_SCOPES,
@@ -37,6 +39,8 @@ import { UserService } from 'src/user/user.service';
 import { AuthTypeEnum } from 'src/core/enums/auth-enums';
 import { EncryptionKeyService } from 'src/encryption/encryption-key.service';
 import { JwtUtilsService } from 'src/jwt-utils/jwt-utils.service';
+import { UpdateAccountSchema } from 'src/user/types';
+import { AccountRepository } from 'src/account/account.repository';
 
 @Injectable()
 export class OauthService {
@@ -48,6 +52,7 @@ export class OauthService {
     private logRepository: ActivityLogRepository,
     private userService: UserService,
     private encryptionKeyService: EncryptionKeyService,
+    private accountRepository: AccountRepository,
     @Inject('DrizzleAsyncProvider') private readonly db: NodePgDatabase,
   ) { }
 
@@ -127,9 +132,16 @@ export class OauthService {
 
     if (!userInfoPayload) throw new BadRequestException();
 
-    const user = await this.userService.getUserByEmail(
+    const user = await this.userRepository.findUserByEmail(
       (userInfoPayload as IUserFromTokenResponse).email,
     );
+
+    // check if auth is credentials not 0auth
+    if (user && !user.account) {
+      throw new ConflictException(
+        "Un compte existe déjà avec cet email. Veuillez vous connecter avec vos identifiants."
+      );
+    }
 
     // create user if not exist and create account
     if (!user) {
@@ -174,7 +186,7 @@ export class OauthService {
     }
 
     // update account
-    await this.userService.updateAccount(user.id, {
+    await this.updateAccount(user.id, {
       accessToken: responsePayload.access_token,
       tokenType: 'Bearer',
       expiresAt: responsePayload.expires_in,
@@ -187,6 +199,24 @@ export class OauthService {
     return {
       ...(await this.generateTokens(user.id, user.email)),
     };
+  }
+
+  // update user account
+  async updateAccount(
+    userId: string,
+    accountData: UpdateAccountSchema,
+  ): Promise<Account | null> {
+    const user = await this.userRepository.findUserById(userId);
+
+    if (!user)
+      throw new NotFoundException('Aucun utilisateur trouvé avec cet ID.');
+
+    const account = await this.accountRepository.updateAccount(
+      userId,
+      accountData,
+    );
+
+    return account[0];
   }
 
   // get user informations from access token
